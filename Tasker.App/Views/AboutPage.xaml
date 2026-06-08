@@ -181,18 +181,107 @@
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         Style="{StaticResource CaptionTextBlockStyle}"
                         TextWrapping="Wrap">
-                        These buttons merge a "windows-tasker" entry into your Copilot CLI config
-                        (~/.copilot/mcp-config.json), VS Code config (%APPDATA%\Code\User\mcp.json),
-                        or Claude Code config (~/.claude.json), pointing at the bundled server. To add
-                        it manually, register a local/stdio MCP server whose command is the value shown
-                        below, then restart the app/CLI.
+                        The buttons above merge a "windows-tasker" stdio server into each tool's config
+                        file, preserving anything already there. Restart the tool afterward to pick it up.
                     </TextBlock>
-                    <TextBox
-                        AutomationProperties.AutomationId="McpPathBox"
-                        FontFamily="Consolas"
-                        Header="MCP server launch command (for external agents)"
-                        IsReadOnly="True"
-                        Text="{x:Bind ViewModel.McpServerCommand}" />
+                    <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                        <Expander.Header>
+                            <TextBlock Text="Manual setup &amp; troubleshooting" />
+                        </Expander.Header>
+                        <StackPanel Spacing="14">
+                            <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}">
+                                To set it up by hand, add the snippet below to the listed file (create the
+                                file if it doesn't exist), then fully restart the tool. The launch command
+                                is the same for every client and works once Windows Tasker is installed:
+                            </TextBlock>
+                            <TextBox
+                                AutomationProperties.AutomationId="McpPathBox"
+                                FontFamily="Consolas"
+                                Header="Launch command"
+                                IsReadOnly="True"
+                                IsSpellCheckEnabled="False"
+                                Text="{x:Bind ViewModel.McpServerCommand}" />
+
+                            <!--  Copilot CLI  -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="GitHub Copilot CLI" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock
+                                    FontFamily="Consolas"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Text="{x:Bind ViewModel.CopilotCliConfigPath}"
+                                    TextWrapping="Wrap" />
+                                <TextBlock
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Text="Tip: you can also run &#x201C;copilot&#x201D; then &#x201C;/mcp add&#x201D;. Restart the CLI after changes."
+                                    TextWrapping="Wrap" />
+                                <TextBox
+                                    AcceptsReturn="True"
+                                    FontFamily="Consolas"
+                                    IsReadOnly="True"
+                                    IsSpellCheckEnabled="False"
+                                    Text="{x:Bind ViewModel.CopilotCliSnippet}"
+                                    TextWrapping="NoWrap" />
+                            </StackPanel>
+
+                            <!--  VS Code  -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="VS Code (Copilot Chat &#x2014; Agent mode)" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock
+                                    FontFamily="Consolas"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Text="{x:Bind ViewModel.VSCodeConfigPath}"
+                                    TextWrapping="Wrap" />
+                                <TextBlock
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Text="Global file shown; for one project use a workspace .vscode\mcp.json instead. Reload VS Code, then choose Agent mode in Copilot Chat."
+                                    TextWrapping="Wrap" />
+                                <TextBox
+                                    AcceptsReturn="True"
+                                    FontFamily="Consolas"
+                                    IsReadOnly="True"
+                                    IsSpellCheckEnabled="False"
+                                    Text="{x:Bind ViewModel.VSCodeSnippet}"
+                                    TextWrapping="NoWrap" />
+                            </StackPanel>
+
+                            <!--  Claude Code  -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Claude Code" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock
+                                    FontFamily="Consolas"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Text="{x:Bind ViewModel.ClaudeCodeConfigPath}"
+                                    TextWrapping="Wrap" />
+                                <TextBlock
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Text="User scope (applies to all projects). Restart Claude Code after changes."
+                                    TextWrapping="Wrap" />
+                                <TextBox
+                                    AcceptsReturn="True"
+                                    FontFamily="Consolas"
+                                    IsReadOnly="True"
+                                    IsSpellCheckEnabled="False"
+                                    Text="{x:Bind ViewModel.ClaudeSnippet}"
+                                    TextWrapping="NoWrap" />
+                            </StackPanel>
+
+                            <TextBlock
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                TextWrapping="Wrap">
+                                Troubleshooting: the command resolves from %LOCALAPPDATA%\Microsoft\WindowsApps
+                                (which is on PATH). If a tool reports &#x201C;command not found&#x201D;, fully
+                                restart it so it inherits your current PATH, or point it at the full path to
+                                mcp\Tasker.Mcp.exe inside the app's install folder.
+                            </TextBlock>
+                        </StackPanel>
+                    </Expander>
                 </StackPanel>
             </Border>
 

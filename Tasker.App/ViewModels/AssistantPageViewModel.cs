@@ -86,9 +86,6 @@ public partial class AssistantPageViewModel : ObservableObject
         }
     }
 
-    [ObservableProperty]
-    public partial bool UseMcpServer { get; set; }
-
     // ---- Model + reasoning-effort selection ----
     private static readonly ModelOption AutoOption = new("auto", "Automatic (recommended)", Array.Empty<string>(), null);
 
@@ -164,18 +161,8 @@ public partial class AssistantPageViewModel : ObservableObject
         await _assistant.ResetAsync();
     }
 
-    public bool McpAvailable => CopilotAssistant.McpAvailable;
-
     public bool HasStoredToken => _assistant.HasStoredToken;
 
-    async partial void OnUseMcpServerChanged(bool value)
-    {
-        _assistant.UseMcpServer = value;
-        await _assistant.ResetAsync();
-        ConnectionStatus = value
-            ? "Routing through the Tasker MCP server (requires a saved GitHub token)."
-            : (_assistant.HasStoredToken ? "Using a saved GitHub token." : "Using your signed-in GitHub Copilot account.");
-    }
 
     public AssistantPageViewModel()
     {

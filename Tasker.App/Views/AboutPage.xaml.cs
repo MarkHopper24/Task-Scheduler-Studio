@@ -13,6 +13,32 @@ public partial class AboutPageViewModel : ObservableObject
     public string McpExePath => McpInstaller.McpExePath;
     public string McpServerCommand => McpInstaller.McpServerCommand;
 
+    // Config file locations for the manual-setup instructions.
+    public string CopilotCliConfigPath => McpInstaller.CopilotCliConfigPath;
+    public string VSCodeConfigPath => McpInstaller.VSCodeConfigPath;
+    public string ClaudeCodeConfigPath => McpInstaller.ClaudeCodeConfigPath;
+
+    // Ready-to-paste config snippets (command escaped for JSON). Copilot CLI and Claude Code use
+    // an "mcpServers" object; VS Code uses "servers".
+    public string CopilotCliSnippet => BuildSnippet("mcpServers");
+    public string VSCodeSnippet => BuildSnippet("servers");
+    public string ClaudeSnippet => BuildSnippet("mcpServers");
+
+    private static string BuildSnippet(string collectionKey)
+    {
+        var command = McpInstaller.McpServerCommand.Replace("\\", "\\\\");
+        return
+            "{\n" +
+            "  \"" + collectionKey + "\": {\n" +
+            "    \"windows-tasker\": {\n" +
+            "      \"type\": \"stdio\",\n" +
+            "      \"command\": \"" + command + "\",\n" +
+            "      \"args\": []\n" +
+            "    }\n" +
+            "  }\n" +
+            "}";
+    }
+
     [ObservableProperty]
     public partial bool McpInstallOpen { get; set; }
 

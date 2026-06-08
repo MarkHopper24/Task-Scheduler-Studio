@@ -128,41 +128,6 @@
                         Command="{x:Bind ViewModel.ClearTokenCommand}"
                         Content="Remove" />
                 </Grid>
-                <Border Height="1" Margin="0,6,0,2" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-                <StackPanel Spacing="4">
-                    <ToggleSwitch
-                        AutomationProperties.AutomationId="UseMcpToggle"
-                        Header="How the assistant runs its task tools"
-                        OffContent="Built&#x2011;in (runs inside this app) &#x2014; recommended"
-                        OnContent="Tasker MCP server (separate process)"
-                        IsEnabled="{x:Bind ViewModel.McpAvailable}"
-                        IsOn="{x:Bind ViewModel.UseMcpServer, Mode=TwoWay}"
-                        ToolTipService.ToolTip="Advanced. Changes how the assistant runs its task tools, not what it can do." />
-                    <TextBlock
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Style="{StaticResource CaptionTextBlockStyle}"
-                        TextWrapping="Wrap">
-                        Advanced &#x2014; this only changes <Run FontWeight="SemiBold">how</Run> the assistant runs its tools, not what it can do. Either way it can only manage scheduled tasks, and the results are identical.
-                    </TextBlock>
-                    <TextBlock
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Style="{StaticResource CaptionTextBlockStyle}"
-                        TextWrapping="Wrap">
-                        <Run FontWeight="SemiBold">Off:</Run> tools run inside this app and work with your GitHub sign&#x2011;in above.
-                    </TextBlock>
-                    <TextBlock
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Style="{StaticResource CaptionTextBlockStyle}"
-                        TextWrapping="Wrap">
-                        <Run FontWeight="SemiBold">On:</Run> the same tools run through the bundled Tasker MCP server as a separate process (the one external agents use). This requires a saved GitHub token above.
-                    </TextBlock>
-                    <TextBlock
-                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                        Style="{StaticResource CaptionTextBlockStyle}"
-                        TextWrapping="Wrap"
-                        Text="The bundled MCP server isn't available, so this option is turned off."
-                        Visibility="{x:Bind helpers:Format.InvertBoolToVisibility(ViewModel.McpAvailable)}" />
-                </StackPanel>
             </StackPanel>
         </Expander>
 

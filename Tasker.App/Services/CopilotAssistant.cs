@@ -58,10 +58,6 @@ public sealed class CopilotAssistant : IAsyncDisposable
     private CopilotClient? _client;
     private CopilotSession? _session;
 
-    /// <summary>When true, the assistant routes tool calls through the bundled Tasker MCP server
-    /// (a separate process) instead of equivalent in-process tools.</summary>
-    public bool UseMcpServer { get; set; }
-
     public static string McpExePath
     {
         get
@@ -165,17 +161,6 @@ public sealed class CopilotAssistant : IAsyncDisposable
             var workspace = PrepareAgentWorkspace();
             options.WorkingDirectory = workspace;
 
-            var useMcp = UseMcpServer && McpAvailable;
-            if (useMcp)
-            {
-                if (string.IsNullOrWhiteSpace(token))
-                {
-                    ErrorMessage?.Invoke("MCP-server mode needs a GitHub token (with Copilot access). Add one below, or turn the toggle off to use the built-in tools.");
-                    return false;
-                }
-                options.BaseDirectory = PrepareMcpHome();
-            }
-
             _client = new CopilotClient(options);
             await _client.StartAsync();
 
@@ -195,8 +180,9 @@ public sealed class CopilotAssistant : IAsyncDisposable
                 },
             };
 
-            if (!useMcp)
-                config.Tools = BuildInProcessTools();
+            // The assistant always runs its task tools in-process (reliable, no extra process or
+            // token needed). External agents use the bundled MCP server instead — see McpInstaller.
+            config.Tools = BuildInProcessTools();
 
             if (!string.IsNullOrWhiteSpace(SelectedReasoningEffort))
                 config.ReasoningEffort = SelectedReasoningEffort;
@@ -274,38 +260,6 @@ public sealed class CopilotAssistant : IAsyncDisposable
             toolOptions: new CopilotToolOptions { SkipPermission = true },
             factoryOptions: new AIFunctionFactoryOptions { Name = "delete_task", Description = "Permanently delete a task by its path. Confirm with the user first." }),
     ];
-
-    /// <summary>Creates an isolated COPILOT_HOME containing an mcp-config.json that registers the
-    /// bundled Tasker MCP server, and returns its path for <c>CopilotClientOptions.BaseDirectory</c>.</summary>
-    private static string PrepareMcpHome()
-    {
-        var home = System.IO.Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "WindowsTasker", "copilot-home");
-        System.IO.Directory.CreateDirectory(home);
-
-        var config = new JsonObject
-        {
-            ["mcpServers"] = new JsonObject
-            {
-                ["windows-tasker"] = new JsonObject
-                {
-                    ["name"] = "windows-tasker",
-                    ["type"] = "stdio",
-                    // Launch the bundled server by absolute path, not the WindowsTaskerMcp.exe alias:
-                    // a packaged app can't reliably launch its OWN app-execution alias. The path is
-                    // resolved fresh at runtime (AppContext.BaseDirectory), so it's never stale. The
-                    // alias is only for EXTERNAL clients (see McpInstaller), where update-stability matters.
-                    ["command"] = McpExePath,
-                    ["args"] = new JsonArray(),
-                    ["tools"] = new JsonArray(),
-                    ["enabled"] = true,
-                },
-            },
-        };
-        System.IO.File.WriteAllText(System.IO.Path.Combine(home, "mcp-config.json"), config.ToJsonString());
-        return home;
-    }
 
     // ---------------------------------------------------------------- safety / hardening
 
