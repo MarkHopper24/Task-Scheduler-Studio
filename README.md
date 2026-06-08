@@ -194,3 +194,18 @@ end‑to‑end create verified against `schtasks`, and an AutomationId accessibi
 ```powershell
 ./ui-tests.ps1 -AppPid <pid-of-running-app>
 ```
+
+## License
+
+Windows Tasker's own source code is released under the **MIT License** — see
+[`LICENSE`](LICENSE). It depends only on permissive (MIT) libraries plus the
+Microsoft Windows App SDK / Windows SDK build tools, which Microsoft's license
+terms allow redistributing inside applications you build. Third-party components
+and their licenses are listed in [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md).
+
+## Privacy
+
+The app runs locally and the developer collects no personal data. Optional
+features (the GitHub Copilot assistant and GitHub sign-in) send data only to
+GitHub when you choose to use them. See [`PRIVACY.md`](PRIVACY.md) for the full
+privacy policy.
