@@ -10,15 +10,15 @@
   IgnorableNamespaces="uap uap5 rescap systemai">
 
   <Identity
-    Name="0FFB5D38-E958-44ED-A4EF-43D4577695AD"
-    Publisher="CN=AppPublisher"
+    Name="53383MarkHopper.WindowsTasker"
+    Publisher="CN=ADA72B16-B88A-4477-94E0-44F1442A4EAE"
     Version="1.0.3.0" />
 
   <mp:PhoneIdentity PhoneProductId="0FFB5D38-E958-44ED-A4EF-43D4577695AD" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
     <DisplayName>Windows Tasker</DisplayName>
-    <PublisherDisplayName>AppPublisher</PublisherDisplayName>
+    <PublisherDisplayName>Mark Hopper</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 

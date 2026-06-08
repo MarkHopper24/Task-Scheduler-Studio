@@ -64,7 +64,7 @@
        Copied into both the build output and the AppX deployment folder (the packaged app's
        runtime base directory). -->
   <Target Name="CopyTaskerMcp" AfterTargets="Build">
-    <MSBuild Projects="$(MSBuildThisFileDirectory)..\Tasker.Mcp\Tasker.Mcp.csproj" Targets="Build" Properties="Configuration=$(Configuration);RuntimeIdentifier=$(RuntimeIdentifier);SelfContained=true" ContinueOnError="true" />
+    <MSBuild Projects="$(MSBuildThisFileDirectory)..\Tasker.Mcp\Tasker.Mcp.csproj" Targets="Restore;Build" Properties="Configuration=$(Configuration);RuntimeIdentifier=$(RuntimeIdentifier);SelfContained=true" ContinueOnError="true" />
     <ItemGroup>
       <!-- The MCP sub-build lands in bin\$(Configuration)\... when built AnyCPU, or
            bin\$(Platform)\$(Configuration)\... when the Platform global (e.g. x64) propagates

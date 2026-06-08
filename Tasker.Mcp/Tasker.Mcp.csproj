@@ -12,6 +12,7 @@
          machines without the .NET runtime installed. The host app passes its own
          RuntimeIdentifier; default to win-x64 for standalone builds. -->
     <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">win-x64</RuntimeIdentifier>
+    <RuntimeIdentifiers>win-x64;win-arm64;win-x86</RuntimeIdentifiers>
     <SelfContained>true</SelfContained>
   </PropertyGroup>
 
