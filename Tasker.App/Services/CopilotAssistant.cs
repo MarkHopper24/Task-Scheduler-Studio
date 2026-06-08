@@ -292,7 +292,11 @@ public sealed class CopilotAssistant : IAsyncDisposable
                 {
                     ["name"] = "windows-tasker",
                     ["type"] = "stdio",
-                    ["command"] = McpServerCommand,
+                    // Launch the bundled server by absolute path, not the WindowsTaskerMcp.exe alias:
+                    // a packaged app can't reliably launch its OWN app-execution alias. The path is
+                    // resolved fresh at runtime (AppContext.BaseDirectory), so it's never stale. The
+                    // alias is only for EXTERNAL clients (see McpInstaller), where update-stability matters.
+                    ["command"] = McpExePath,
                     ["args"] = new JsonArray(),
                     ["tools"] = new JsonArray(),
                     ["enabled"] = true,
