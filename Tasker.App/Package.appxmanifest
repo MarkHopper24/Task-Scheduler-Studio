@@ -12,7 +12,7 @@
   <Identity
     Name="0FFB5D38-E958-44ED-A4EF-43D4577695AD"
     Publisher="CN=AppPublisher"
-    Version="1.0.2.0" />
+    Version="1.0.3.0" />
 
   <mp:PhoneIdentity PhoneProductId="0FFB5D38-E958-44ED-A4EF-43D4577695AD" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
@@ -50,6 +50,30 @@
             TaskId="WindowsTaskerStartup"
             Enabled="false"
             DisplayName="Windows Tasker" />
+        </uap5:Extension>
+      </Extensions>
+    </Application>
+    <!--
+      The bundled MCP server, exposed under a stable app-execution alias. External MCP clients
+      (Copilot CLI, VS Code, Claude Code) launch "WindowsTaskerMcp.exe" — which Windows resolves
+      from %LOCALAPPDATA%\Microsoft\WindowsApps (on PATH) to the installed server, regardless of
+      install location or version. Hidden from the app list (AppListEntry="none").
+    -->
+    <Application Id="McpServer"
+      Executable="mcp\Tasker.Mcp.exe"
+      EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        AppListEntry="none"
+        DisplayName="Windows Tasker MCP Server"
+        Description="Local MCP server exposing Windows Tasker to AI agents"
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png" />
+      <Extensions>
+        <uap5:Extension Category="windows.appExecutionAlias">
+          <uap5:AppExecutionAlias>
+            <uap5:ExecutionAlias Alias="WindowsTaskerMcp.exe" />
+          </uap5:AppExecutionAlias>
         </uap5:Extension>
       </Extensions>
     </Application>

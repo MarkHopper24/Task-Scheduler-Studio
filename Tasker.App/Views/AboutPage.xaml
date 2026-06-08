@@ -184,15 +184,15 @@
                         These buttons merge a "windows-tasker" entry into your Copilot CLI config
                         (~/.copilot/mcp-config.json), VS Code config (%APPDATA%\Code\User\mcp.json),
                         or Claude Code config (~/.claude.json), pointing at the bundled server. To add
-                        it manually, register a local/stdio MCP server whose command is the path shown
+                        it manually, register a local/stdio MCP server whose command is the value shown
                         below, then restart the app/CLI.
                     </TextBlock>
                     <TextBox
                         AutomationProperties.AutomationId="McpPathBox"
                         FontFamily="Consolas"
-                        Header="Bundled MCP server path"
+                        Header="MCP server launch command (for external agents)"
                         IsReadOnly="True"
-                        Text="{x:Bind ViewModel.McpExePath}" />
+                        Text="{x:Bind ViewModel.McpServerCommand}" />
                 </StackPanel>
             </Border>
 

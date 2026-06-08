@@ -94,7 +94,11 @@ cd Tasker.App
 VS Code** — each merges a `windows-tasker` entry into the right config file (preserving anything
 already there) pointing at the bundled server. Restart the CLI/editor afterward.
 
-To do it manually, point your MCP client at the built server executable.
+To do it manually, set the MCP client's launch command. **When the app is installed** (from the
+Microsoft Store or an MSIX package) it registers a stable app-execution alias, so the command is
+simply `WindowsTaskerMcp.exe` — Windows resolves it from `%LOCALAPPDATA%\Microsoft\WindowsApps`
+(on `PATH`) to the installed server, and it keeps working across app updates regardless of install
+location. For an **unpackaged dev run**, use the absolute path to the built `Tasker.Mcp.exe`.
 
 **GitHub Copilot CLI** — `~/.copilot/mcp-config.json`:
 
@@ -103,7 +107,7 @@ To do it manually, point your MCP client at the built server executable.
   "mcpServers": {
     "windows-tasker": {
       "type": "stdio",
-      "command": "D:\\Windows Tasker\\Tasker.App\\bin\\x64\\Debug\\net10.0-windows10.0.26100.0\\win-x64\\mcp\\Tasker.Mcp.exe",
+      "command": "WindowsTaskerMcp.exe",
       "args": [],
       "tools": []
     }
@@ -111,8 +115,9 @@ To do it manually, point your MCP client at the built server executable.
 }
 ```
 
-You can also add it from the CLI with `copilot` then `/mcp add`, or use any built `Tasker.Mcp.exe`
-path (e.g. `Tasker.Mcp\bin\Debug\net10.0-windows10.0.26100.0\Tasker.Mcp.exe`).
+The one-click installers write this alias automatically. For an unpackaged dev build, replace the
+command with the absolute path to the built server, e.g.
+`Tasker.App\bin\x64\Debug\net10.0-windows10.0.26100.0\win-x64\mcp\Tasker.Mcp.exe`.
 
 **VS Code** (Agent mode) — `%APPDATA%\Code\User\mcp.json` (or per-workspace `.vscode/mcp.json`):
 
@@ -121,7 +126,7 @@ path (e.g. `Tasker.Mcp\bin\Debug\net10.0-windows10.0.26100.0\Tasker.Mcp.exe`).
   "servers": {
     "windows-tasker": {
       "type": "stdio",
-      "command": "D:\\Windows Tasker\\Tasker.App\\bin\\x64\\Debug\\net10.0-windows10.0.26100.0\\win-x64\\mcp\\Tasker.Mcp.exe",
+      "command": "WindowsTaskerMcp.exe",
       "args": []
     }
   }

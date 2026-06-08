@@ -16,6 +16,10 @@ public static class McpInstaller
     public static string McpExePath => CopilotAssistant.McpExePath;
     public static bool McpAvailable => File.Exists(McpExePath);
 
+    /// <summary>The command written into external MCP client configs: a stable app-execution alias
+    /// when installed, or the absolute server path for unpackaged dev runs.</summary>
+    public static string McpServerCommand => CopilotAssistant.McpServerCommand;
+
     public static string CopilotCliConfigPath =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".copilot", "mcp-config.json");
 
@@ -40,7 +44,7 @@ public static class McpInstaller
         {
             ["name"] = ServerName,
             ["type"] = "stdio",
-            ["command"] = McpExePath,
+            ["command"] = McpServerCommand,
             ["args"] = new JsonArray(),
             ["env"] = new JsonObject(),
             ["tools"] = new JsonArray(),
@@ -54,7 +58,7 @@ public static class McpInstaller
         return Install(VSCodeConfigPath, "servers", new JsonObject
         {
             ["type"] = "stdio",
-            ["command"] = McpExePath,
+            ["command"] = McpServerCommand,
             ["args"] = new JsonArray(),
         }, "VS Code");
     }
@@ -66,7 +70,7 @@ public static class McpInstaller
         return Install(ClaudeCodeConfigPath, "mcpServers", new JsonObject
         {
             ["type"] = "stdio",
-            ["command"] = McpExePath,
+            ["command"] = McpServerCommand,
             ["args"] = new JsonArray(),
             ["env"] = new JsonObject(),
         }, "Claude Code");

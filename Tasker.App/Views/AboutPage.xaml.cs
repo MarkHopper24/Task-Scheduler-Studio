@@ -11,6 +11,7 @@ public partial class AboutPageViewModel : ObservableObject
     public partial string ConnectionText { get; set; } = "Connecting to Task Scheduler\u2026";
 
     public string McpExePath => McpInstaller.McpExePath;
+    public string McpServerCommand => McpInstaller.McpServerCommand;
 
     [ObservableProperty]
     public partial bool McpInstallOpen { get; set; }

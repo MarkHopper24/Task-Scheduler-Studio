@@ -78,6 +78,19 @@ public sealed class CopilotAssistant : IAsyncDisposable
         }
     }
 
+    /// <summary>Stable app-execution alias declared in the package manifest for the bundled MCP
+    /// server. Resolvable on PATH (via %LOCALAPPDATA%\Microsoft\WindowsApps) once the app is
+    /// installed; unaffected by version/install-location changes.</summary>
+    public const string McpAlias = "WindowsTaskerMcp.exe";
+
+    private static bool IsPackaged => TryPackagePath() is not null;
+
+    /// <summary>The command external MCP clients (and the in-app MCP routing) should launch to start
+    /// the bundled server. For an installed/packaged app this is the stable alias <see cref="McpAlias"/>,
+    /// which survives updates and works from any install path; for an unpackaged dev run it's the
+    /// absolute path to the built server exe.</summary>
+    public static string McpServerCommand => IsPackaged ? McpAlias : McpExePath;
+
     private static string? TryPackagePath()
     {
         try { return Windows.ApplicationModel.Package.Current.InstalledLocation.Path; }
@@ -279,7 +292,7 @@ public sealed class CopilotAssistant : IAsyncDisposable
                 {
                     ["name"] = "windows-tasker",
                     ["type"] = "stdio",
-                    ["command"] = McpExePath,
+                    ["command"] = McpServerCommand,
                     ["args"] = new JsonArray(),
                     ["tools"] = new JsonArray(),
                     ["enabled"] = true,
