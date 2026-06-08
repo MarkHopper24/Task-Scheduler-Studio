@@ -5,6 +5,11 @@ server** so AI agents can manage scheduled tasks. Both share one engine and writ
 Windows Task Scheduler store**, so every task is fully interoperable with the built‑in Task
 Scheduler — create a task in either tool and it appears, runs, and edits identically in the other.
 
+> **Disclaimer:** Windows Tasker was created by a Microsoft employee as an individual personal
+> project and proof of concept. It is **not** an official Microsoft product, service, or offering,
+> and it is **not affiliated with, endorsed by, or supported by Microsoft**. All work and opinions
+> are the developer's own.
+
 ![Tasks](screenshots/01-tasks.png)
 
 ## Why it's cross‑compatible
