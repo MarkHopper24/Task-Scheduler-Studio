@@ -50,26 +50,17 @@
             Enabled="false"
             DisplayName="Windows Tasker" />
         </uap5:Extension>
-      </Extensions>
-    </Application>
-    <!--
-      The bundled MCP server, exposed under a stable app-execution alias. External MCP clients
-      (Copilot CLI, VS Code, Claude Code) launch "WindowsTaskerMcp.exe" — which Windows resolves
-      from %LOCALAPPDATA%\Microsoft\WindowsApps (on PATH) to the installed server, regardless of
-      install location or version. Hidden from the app list (AppListEntry="none").
-    -->
-    <Application Id="McpServer"
-      Executable="mcp\Tasker.Mcp.exe"
-      EntryPoint="Windows.FullTrustApplication">
-      <uap:VisualElements
-        AppListEntry="none"
-        DisplayName="Windows Tasker MCP Server"
-        Description="Local MCP server exposing Windows Tasker to AI agents"
-        BackgroundColor="transparent"
-        Square150x150Logo="Assets\Square150x150Logo.png"
-        Square44x44Logo="Assets\Square44x44Logo.png" />
-      <Extensions>
-        <uap5:Extension Category="windows.appExecutionAlias">
+        <!--
+          Expose the bundled MCP server under a stable app-execution alias. External MCP clients
+          (Copilot CLI, VS Code, Claude Code) launch "WindowsTaskerMcp.exe", which Windows resolves
+          from %LOCALAPPDATA%\Microsoft\WindowsApps (on PATH) to the installed server regardless of
+          install location or version. The alias' Executable points at the bundled server, so this
+          stays a single, normal (non-headless) app — no extra Start-menu entry, no headless waiver.
+        -->
+        <uap5:Extension
+          Category="windows.appExecutionAlias"
+          Executable="mcp\Tasker.Mcp.exe"
+          EntryPoint="Windows.FullTrustApplication">
           <uap5:AppExecutionAlias>
             <uap5:ExecutionAlias Alias="WindowsTaskerMcp.exe" />
           </uap5:AppExecutionAlias>
