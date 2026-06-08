@@ -1,0 +1,106 @@
+## ----------------------------------------------------------------------------
+## .gitignore for the Windows Tasker solution (.NET / WinUI 3 / MSIX)
+## ----------------------------------------------------------------------------
+
+# Build results
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+[Dd]ebugPublic/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Oo]ut/
+msbuild.log
+msbuild.err
+msbuild.wrn
+
+# Visual Studio / Rider / VS Code workspace state
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+# .NET / Roslyn
+project.lock.json
+project.fragment.lock.json
+artifacts/
+Generated\ Files/
+*.binlog
+
+# NuGet
+*.nupkg
+*.snupkg
+*.nuget.props
+*.nuget.targets
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+.nuget/
+
+# Test / coverage results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.trx
+coverage*.json
+coverage*.xml
+coverage*.info
+*.coverage
+*.coveragexml
+
+# Logs
+[Ll]og/
+[Ll]ogs/
+*.log
+
+# MSIX / AppX packaging output
+AppPackages/
+BundleArtifacts/
+*.appx
+*.appxbundle
+*.appxupload
+*.msix
+*.msixbundle
+*.msixupload
+package.appxmanifest.bak
+
+# Signing certificates and secrets — never commit these
+*.pfx
+*.cer
+*.p12
+*.snk
+*.pvk
+*.publishsettings
+
+# Publish output
+publish/
+[Pp]ublish/
+PublishScripts/
+
+# MSBuild temp project
+*_wpftmp.csproj
+
+# OS / editor cruft
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.swp
+*~
+
+# Local test artifacts (UI test runs)
+test-results.json
+test-screenshot.png
+/*.png
+
+# Keep the curated README screenshots even though loose root PNGs are ignored above
+!screenshots/
+!screenshots/**

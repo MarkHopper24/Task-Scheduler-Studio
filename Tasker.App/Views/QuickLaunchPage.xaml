@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="Tasker_App.Views.QuickLaunchPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:core="using:Tasker.Core"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:helpers="using:Tasker_App.Helpers"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid>
+        <!--  Normal (full) view  -->
+        <Grid
+            x:Name="NormalView"
+            Padding="24"
+            RowSpacing="14"
+            Visibility="{x:Bind helpers:Format.BoolToVisibility(ViewModel.IsNormal), Mode=OneWay}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!--  Header  -->
+            <Grid Grid.Row="0" ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="Quick Launch" Style="{StaticResource TitleTextBlockStyle}" />
+                    <TextBlock
+                        Text="One-click access to the tasks you run most. Pinned tasks are saved across restarts."
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}" />
+                </StackPanel>
+                <Button
+                    Grid.Column="1"
+                    AutomationProperties.AutomationId="QuickLaunchMinimalButton"
+                    Click="ToggleWidget_Click"
+                    ToolTipService.ToolTip="Minimal view &#x2014; a floating, always-on-top widget">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon FontSize="14" Glyph="&#xE944;" />
+                        <TextBlock Text="Minimal view" />
+                    </StackPanel>
+                </Button>
+                <Button
+                    Grid.Column="2"
+                    AutomationProperties.AutomationId="QuickLaunchRefreshButton"
+                    Command="{x:Bind ViewModel.RefreshCommand}"
+                    ToolTipService.ToolTip="Refresh">
+                    <FontIcon FontSize="14" Glyph="&#xE72C;" />
+                </Button>
+                <Button
+                    Grid.Column="3"
+                    AutomationProperties.AutomationId="QuickLaunchAddButton"
+                    Click="Add_Click"
+                    Style="{ThemeResource AccentButtonStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon FontSize="14" Glyph="&#xE710;" />
+                        <TextBlock Text="Add tasks" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+
+            <ProgressBar
+                Grid.Row="1"
+                IsIndeterminate="True"
+                Visibility="{x:Bind helpers:Format.BoolToVisibility(ViewModel.IsBusy), Mode=OneWay}" />
+
+            <InfoBar
+                Grid.Row="2"
+                AutomationProperties.AutomationId="QuickLaunchStatus"
+                IsClosable="True"
+                IsOpen="{x:Bind ViewModel.StatusOpen, Mode=TwoWay}"
+            Message="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"
+            Severity="{x:Bind ViewModel.StatusSeverity, Mode=OneWay}" />
+
+        <!--  Gallery  -->
+        <Grid Grid.Row="3">
+            <!--  Empty state  -->
+            <StackPanel
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="10"
+                Visibility="{x:Bind helpers:Format.BoolToVisibility(ViewModel.IsEmpty), Mode=OneWay}">
+                <FontIcon FontSize="40" Glyph="&#xE945;" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="No tasks pinned yet." />
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Text="Use &#x201C;Add tasks&#x201D; to pin enabled tasks for one-click running." />
+                <Button
+                    HorizontalAlignment="Center"
+                    AutomationProperties.AutomationId="QuickLaunchEmptyAddButton"
+                    Click="Add_Click"
+                    Content="Add tasks&#x2026;" />
+            </StackPanel>
+
+            <GridView
+                AutomationProperties.AutomationId="QuickLaunchGallery"
+                IsItemClickEnabled="False"
+                ItemsSource="{x:Bind ViewModel.Items}"
+                SelectionMode="None"
+                Visibility="{x:Bind helpers:Format.InvertBoolToVisibility(ViewModel.IsEmpty), Mode=OneWay}">
+                <GridView.ItemContainerStyle>
+                        <Style TargetType="GridViewItem">
+                            <Setter Property="Margin" Value="0,0,12,12" />
+                            <Setter Property="Padding" Value="0" />
+                        </Style>
+                    </GridView.ItemContainerStyle>
+                    <GridView.ItemTemplate>
+                        <DataTemplate x:DataType="core:TaskSummaryDto">
+                            <Grid
+                                Width="280"
+                                Height="178"
+                                Padding="16"
+                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                RowSpacing="6">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <!--  Name + unpin  -->
+                                <Grid Grid.Row="0" ColumnSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock
+                                        Grid.Column="0"
+                                        Text="{x:Bind Name}"
+                                        ToolTipService.ToolTip="{x:Bind Name}"
+                                        MaxLines="2"
+                                        Style="{StaticResource BodyStrongTextBlockStyle}"
+                                        TextTrimming="CharacterEllipsis"
+                                        TextWrapping="Wrap" />
+                                    <Button
+                                        Grid.Column="1"
+                                        Width="30"
+                                        Height="30"
+                                        Padding="0"
+                                        VerticalAlignment="Top"
+                                        AutomationProperties.AutomationId="QuickLaunchUnpinButton"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Click="Unpin_Click"
+                                        ToolTipService.ToolTip="Remove from Quick Launch">
+                                        <FontIcon FontSize="14" Glyph="&#xE77A;" />
+                                    </Button>
+                                </Grid>
+
+                                <!--  Status + last run + folder  -->
+                                <StackPanel Grid.Row="1" Spacing="3" VerticalAlignment="Top">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <FontIcon FontSize="13" Glyph="{x:Bind helpers:Format.StateGlyph(State)}" Foreground="{x:Bind helpers:Format.StateBrush(State)}" />
+                                        <TextBlock Text="{x:Bind StateText}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                    <TextBlock
+                                        Text="{x:Bind helpers:Format.LastRunSummary(LastRunTime, LastResultText)}"
+                                        ToolTipService.ToolTip="{x:Bind helpers:Format.LastRunSummary(LastRunTime, LastResultText)}"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        MaxLines="1"
+                                        Style="{StaticResource CaptionTextBlockStyle}"
+                                        TextTrimming="CharacterEllipsis"
+                                        TextWrapping="NoWrap" />
+                                    <TextBlock
+                                        Text="{x:Bind Folder}"
+                                        ToolTipService.ToolTip="{x:Bind Folder}"
+                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                        MaxLines="1"
+                                        Style="{StaticResource CaptionTextBlockStyle}"
+                                        TextTrimming="CharacterEllipsis"
+                                        TextWrapping="NoWrap" />
+                                </StackPanel>
+
+                                <!--  Run  -->
+                                <Button
+                                    Grid.Row="2"
+                                    HorizontalAlignment="Stretch"
+                                    AutomationProperties.AutomationId="QuickLaunchRunButton"
+                                    Click="Run_Click"
+                                    Style="{ThemeResource AccentButtonStyle}">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <FontIcon FontSize="14" Glyph="&#xE768;" />
+                                        <TextBlock Text="Run" />
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                        </DataTemplate>
+                    </GridView.ItemTemplate>
+                </GridView>
+            </Grid>
+        </Grid>
+
+        <!--  Minimal floating-widget view  -->
+        <Grid
+            x:Name="WidgetView"
+            Padding="12"
+            RowSpacing="8"
+            Visibility="{x:Bind helpers:Format.BoolToVisibility(ViewModel.IsWidget), Mode=OneWay}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid.ContextFlyout>
+                <MenuFlyout>
+                    <MenuFlyoutItem Click="Add_Click" Text="Add or remove pinned tasks&#x2026;">
+                        <MenuFlyoutItem.Icon>
+                            <FontIcon Glyph="&#xE710;" />
+                        </MenuFlyoutItem.Icon>
+                    </MenuFlyoutItem>
+                    <MenuFlyoutSeparator />
+                    <MenuFlyoutItem Click="ToggleWidget_Click" Text="Exit minimal view">
+                        <MenuFlyoutItem.Icon>
+                            <FontIcon Glyph="&#xE740;" />
+                        </MenuFlyoutItem.Icon>
+                    </MenuFlyoutItem>
+                </MenuFlyout>
+            </Grid.ContextFlyout>
+
+            <Grid
+                x:Name="WidgetHeader"
+                Grid.Row="0"
+                Background="Transparent"
+                ColumnSpacing="6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" ToolTipService.ToolTip="Drag to move">
+                    <FontIcon FontSize="14" Glyph="&#xE945;" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                    <TextBlock Text="Quick Launch" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                </StackPanel>
+                <Button
+                    Grid.Column="1"
+                    Width="32"
+                    Height="32"
+                    Padding="0"
+                    x:Name="QuickLaunchWidgetPinButton"
+                    AutomationProperties.AutomationId="QuickLaunchWidgetPinButton"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Click="WidgetPin_Click"
+                    ToolTipService.ToolTip="Keep on top">
+                    <FontIcon x:Name="QuickLaunchWidgetPinIcon" FontSize="14" Glyph="&#xE718;" />
+                </Button>
+                <Button
+                    Grid.Column="2"
+                    Width="32"
+                    Height="32"
+                    Padding="0"
+                    AutomationProperties.AutomationId="QuickLaunchWidgetAddButton"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Click="Add_Click"
+                    ToolTipService.ToolTip="Add tasks">
+                    <FontIcon FontSize="14" Glyph="&#xE710;" />
+                </Button>
+                <Button
+                    Grid.Column="3"
+                    Width="32"
+                    Height="32"
+                    Padding="0"
+                    AutomationProperties.AutomationId="QuickLaunchExitWidgetButton"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Click="ToggleWidget_Click"
+                    ToolTipService.ToolTip="Exit minimal view">
+                    <FontIcon FontSize="14" Glyph="&#xE740;" />
+                </Button>
+                <Button
+                    Grid.Column="4"
+                    Width="32"
+                    Height="32"
+                    Padding="0"
+                    AutomationProperties.AutomationId="QuickLaunchWidgetCloseButton"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Click="WidgetClose_Click"
+                    ToolTipService.ToolTip="Close">
+                    <FontIcon FontSize="14" Glyph="&#xE8BB;" />
+                </Button>
+            </Grid>
+
+            <ScrollViewer Grid.Row="1">
+                <StackPanel Spacing="6">
+                    <TextBlock
+                        AutomationProperties.AutomationId="WidgetEmptyHint"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Text="No tasks pinned. Use + (or right&#x2011;click) to add."
+                        TextWrapping="Wrap"
+                        Visibility="{x:Bind helpers:Format.BoolToVisibility(ViewModel.IsEmpty), Mode=OneWay}" />
+                    <ItemsControl AutomationProperties.AutomationId="QuickLaunchWidgetList" ItemsSource="{x:Bind ViewModel.Items}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="core:TaskSummaryDto">
+                                <Grid Margin="0,2" ColumnSpacing="4">
+                                    <Grid.ContextFlyout>
+                                        <MenuFlyout>
+                                            <MenuFlyoutItem Click="Run_Click" Text="Run now">
+                                                <MenuFlyoutItem.Icon>
+                                                    <FontIcon Glyph="&#xE768;" />
+                                                </MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
+                                            <MenuFlyoutItem Click="CopyPath_Click" Text="Copy task path">
+                                                <MenuFlyoutItem.Icon>
+                                                    <FontIcon Glyph="&#xE8C8;" />
+                                                </MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
+                                            <MenuFlyoutSeparator />
+                                            <MenuFlyoutItem Click="Unpin_Click" Text="Unpin from Quick Launch">
+                                                <MenuFlyoutItem.Icon>
+                                                    <FontIcon Glyph="&#xE77A;" />
+                                                </MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
+                                        </MenuFlyout>
+                                    </Grid.ContextFlyout>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Button
+                                        Grid.Column="0"
+                                        Padding="12,8"
+                                        HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Left"
+                                        Click="Run_Click"
+                                        ToolTipService.ToolTip="{x:Bind helpers:Format.LastRunSummary(LastRunTime, LastResultText)}">
+                                        <Grid ColumnSpacing="10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <FontIcon Grid.Column="0" VerticalAlignment="Center" FontSize="13" Glyph="&#xE768;" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock Text="{x:Bind Name}" MaxLines="1" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                                                <TextBlock
+                                                    Text="{x:Bind helpers:Format.LastRunSummary(LastRunTime, LastResultText)}"
+                                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                    MaxLines="1"
+                                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                                    TextTrimming="CharacterEllipsis"
+                                                    TextWrapping="NoWrap" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Button>
+                                    <Button
+                                        Grid.Column="1"
+                                        Width="32"
+                                        Height="32"
+                                        Padding="0"
+                                        VerticalAlignment="Center"
+                                        AutomationProperties.AutomationId="QuickLaunchWidgetUnpinButton"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Click="Unpin_Click"
+                                        ToolTipService.ToolTip="Remove from Quick Launch">
+                                        <FontIcon FontSize="13" Glyph="&#xE77A;" />
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</Page>
