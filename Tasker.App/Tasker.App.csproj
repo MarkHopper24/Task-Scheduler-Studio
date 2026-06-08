@@ -66,7 +66,11 @@
   <Target Name="CopyTaskerMcp" AfterTargets="Build">
     <MSBuild Projects="$(MSBuildThisFileDirectory)..\Tasker.Mcp\Tasker.Mcp.csproj" Targets="Build" Properties="Configuration=$(Configuration);RuntimeIdentifier=$(RuntimeIdentifier);SelfContained=true" ContinueOnError="true" />
     <ItemGroup>
+      <!-- The MCP sub-build lands in bin\$(Configuration)\... when built AnyCPU, or
+           bin\$(Platform)\$(Configuration)\... when the Platform global (e.g. x64) propagates
+           (as it does under VS MSBuild / packaging). Glob both so the server is always staged. -->
       <TaskerMcpFiles Include="$(MSBuildThisFileDirectory)..\Tasker.Mcp\bin\$(Configuration)\net10.0-windows10.0.26100.0\$(RuntimeIdentifier)\**\*.*" />
+      <TaskerMcpFiles Condition="'$(Platform)' != '' and '$(Platform)' != 'AnyCPU'" Include="$(MSBuildThisFileDirectory)..\Tasker.Mcp\bin\$(Platform)\$(Configuration)\net10.0-windows10.0.26100.0\$(RuntimeIdentifier)\**\*.*" />
     </ItemGroup>
     <Copy
       SourceFiles="@(TaskerMcpFiles)"
@@ -93,7 +97,9 @@
   <PropertyGroup>
     <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
     <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
-    <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
-    <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
+    <!-- Trimming is disabled: this app relies on reflection (WinUI/XAML, System.Text.Json in the
+         MCP tools, and the GitHub Copilot SDK), which the IL trimmer cannot fully preserve and
+         would break at runtime. ReadyToRun is kept for startup speed. -->
+    <PublishTrimmed>false</PublishTrimmed>
   </PropertyGroup>
 </Project>
