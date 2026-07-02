@@ -1,0 +1,75 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap uap5 rescap">
+
+  <Identity
+    Name="53383MarkHopper.WindowsTasker"
+    Publisher="CN=ADA72B16-B88A-4477-94E0-44F1442A4EAE"
+    Version="1.0.3.0" />
+
+  <mp:PhoneIdentity PhoneProductId="0FFB5D38-E958-44ED-A4EF-43D4577695AD" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
+
+  <Properties>
+    <DisplayName>WinTask Scheduler</DisplayName>
+    <PublisherDisplayName>Mark Hopper</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.17763.0" MaxVersionTested="10.0.26226.0" />
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.26226.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="x-generate"/>
+  </Resources>
+
+  <Applications>
+    <Application Id="App"
+      Executable="$targetnametoken$.exe"
+      EntryPoint="$targetentrypoint$">
+      <uap:VisualElements
+        DisplayName="WinTask Scheduler"
+        Description="A modern take on Windows Task Scheduler"
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
+        <uap:SplashScreen Image="Assets\SplashScreen.png" />
+      </uap:VisualElements>
+      <Extensions>
+        <uap5:Extension Category="windows.startupTask">
+          <uap5:StartupTask
+            TaskId="WinTaskSchedulerStartup"
+            Enabled="false"
+            DisplayName="WinTask Scheduler" />
+        </uap5:Extension>
+        <!--
+          Expose the bundled MCP server under a stable app-execution alias. External MCP clients
+          (Copilot CLI, VS Code, Claude Code) launch "WinTaskSchedulerMcp.exe", which Windows resolves
+          from %LOCALAPPDATA%\Microsoft\WindowsApps (on PATH) to the installed server regardless of
+          install location or version. The alias' Executable points at the bundled server, so this
+          stays a single, normal (non-headless) app — no extra Start-menu entry, no headless waiver.
+        -->
+        <uap5:Extension
+          Category="windows.appExecutionAlias"
+          Executable="mcp\Tasker.Mcp.exe"
+          EntryPoint="Windows.FullTrustApplication">
+          <uap5:AppExecutionAlias>
+            <uap5:ExecutionAlias Alias="WinTaskSchedulerMcp.exe" />
+          </uap5:AppExecutionAlias>
+        </uap5:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+</Package>

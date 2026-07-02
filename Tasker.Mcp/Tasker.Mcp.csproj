@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Tasker.Mcp</RootNamespace>
+    <AssemblyName>Tasker.Mcp</AssemblyName>
+    <!-- Ship the MCP server self-contained so external agents can launch it on
+         machines without the .NET runtime installed. The host app passes its own
+         RuntimeIdentifier; default to win-x64 for standalone builds. -->
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">win-x64</RuntimeIdentifier>
+    <RuntimeIdentifiers>win-x64;win-arm64;win-x86</RuntimeIdentifiers>
+    <SelfContained>true</SelfContained>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Tasker.Core\Tasker.Core.csproj" />
+  </ItemGroup>
+
+</Project>

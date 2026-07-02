@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="Tasker_App.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:Tasker_App"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <NavigationView
+        x:Name="NavView"
+        AutomationProperties.AutomationId="MainNavView"
+        IsBackButtonVisible="Collapsed"
+        IsSettingsVisible="False"
+        PaneDisplayMode="Left"
+        OpenPaneLength="220"
+        ItemInvoked="NavView_ItemInvoked"
+        SelectionChanged="NavView_SelectionChanged">
+
+        <NavigationView.MenuItems>
+            <NavigationViewItem
+                x:Name="TasksItem"
+                AutomationProperties.AutomationId="NavTasks"
+                Content="Tasks"
+                Tag="Tasks">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE8FD;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem
+                x:Name="QuickLaunchItem"
+                AutomationProperties.AutomationId="NavQuickLaunch"
+                Content="Quick Launch"
+                Tag="QuickLaunch">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE945;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem
+                AutomationProperties.AutomationId="NavRunning"
+                Content="Running"
+                Tag="Running">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE768;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem
+                AutomationProperties.AutomationId="NavUpcoming"
+                Content="Upcoming"
+                Tag="Upcoming">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE787;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem
+                x:Name="AssistantItem"
+                AutomationProperties.AutomationId="NavAssistant"
+                Content="Assistant"
+                Tag="Assistant">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE99A;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+        </NavigationView.MenuItems>
+
+        <NavigationView.FooterMenuItems>
+            <NavigationViewItem
+                x:Name="PinItem"
+                AutomationProperties.AutomationId="NavPin"
+                Content="Pin"
+                SelectsOnInvoked="False"
+                Tag="Pin"
+                ToolTipService.ToolTip="Keep this window above other windows">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE718;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem
+                AutomationProperties.AutomationId="NavSettings"
+                Content="Settings"
+                Tag="Settings">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE713;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+        </NavigationView.FooterMenuItems>
+
+        <Frame x:Name="ContentFrame" />
+    </NavigationView>
+</Page>

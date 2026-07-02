@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="Tasker_App.Views.AboutPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <ScrollViewer>
+        <StackPanel Padding="24" MaxWidth="760" HorizontalAlignment="Left" Spacing="16">
+            <StackPanel Orientation="Horizontal" Spacing="16">
+                <Image
+                    Width="44"
+                    Height="44"
+                    VerticalAlignment="Center"
+                    AutomationProperties.Name="WinTask Scheduler logo"
+                    Source="ms-appx:///Assets/Square44x44Logo.scale-200.png" />
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="WinTask Scheduler" Style="{StaticResource TitleTextBlockStyle}" />
+                    <TextBlock
+                        Text="A modern take on Windows Task Scheduler"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+            </StackPanel>
+
+            <Border
+                Background="{ThemeResource LayerFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="20">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Appearance" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Backdrop" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <StackPanel Orientation="Horizontal" Spacing="16">
+                            <RadioButton x:Name="BackdropMicaAlt" AutomationProperties.AutomationId="BackdropMicaAlt" Checked="Backdrop_Checked" Content="Mica Alt" GroupName="bd" Tag="0" />
+                            <RadioButton x:Name="BackdropMica" AutomationProperties.AutomationId="BackdropMica" Checked="Backdrop_Checked" Content="Mica" GroupName="bd" Tag="1" />
+                            <RadioButton x:Name="BackdropAcrylic" AutomationProperties.AutomationId="BackdropAcrylic" Checked="Backdrop_Checked" Content="Acrylic" GroupName="bd" Tag="2" />
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Theme" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <StackPanel Orientation="Horizontal" Spacing="16">
+                            <RadioButton x:Name="ThemeSystem" AutomationProperties.AutomationId="ThemeSystem" Checked="Theme_Checked" Content="Use system" GroupName="th" Tag="0" />
+                            <RadioButton x:Name="ThemeLight" AutomationProperties.AutomationId="ThemeLight" Checked="Theme_Checked" Content="Light" GroupName="th" Tag="1" />
+                            <RadioButton x:Name="ThemeDark" AutomationProperties.AutomationId="ThemeDark" Checked="Theme_Checked" Content="Dark" GroupName="th" Tag="2" />
+                        </StackPanel>
+                    </StackPanel>
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        TextWrapping="Wrap"
+                        Text="Mica and Mica Alt tint the window with the desktop wallpaper; Acrylic is a translucent blur. The theme can follow Windows or be forced." />
+                </StackPanel>
+            </Border>
+
+            <Border
+                Background="{ThemeResource LayerFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="20">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Startup &amp; features" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Open this page on launch" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <RadioButtons
+                            x:Name="StartPageRadios"
+                            AutomationProperties.AutomationId="StartPageRadios"
+                            MaxColumns="2"
+                            SelectionChanged="StartPage_SelectionChanged">
+                            <RadioButton x:Name="StartTasks" AutomationProperties.AutomationId="StartTasks" Content="Tasks" />
+                            <RadioButton x:Name="StartQuickLaunch" AutomationProperties.AutomationId="StartQuickLaunch" Content="Quick Launch" />
+                            <RadioButton x:Name="StartQuickLaunchWidget" AutomationProperties.AutomationId="StartQuickLaunchWidget" Content="Quick Launch (minimal view)" />
+                            <RadioButton x:Name="StartAssistant" AutomationProperties.AutomationId="StartAssistant" Content="Assistant" />
+                        </RadioButtons>
+                    </StackPanel>
+                    <ToggleSwitch
+                        x:Name="StartupToggle"
+                        AutomationProperties.AutomationId="StartupToggle"
+                        Header="Run when I sign in to Windows"
+                        OffContent="Off"
+                        OnContent="On"
+                        Toggled="StartupToggle_Toggled" />
+                    <TextBlock
+                        x:Name="StartupNote"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        TextWrapping="Wrap"
+                        Visibility="Collapsed" />
+                    <ToggleSwitch
+                        x:Name="AlwaysAdminToggle"
+                        AutomationProperties.AutomationId="AlwaysAdminToggle"
+                        Header="Always run as administrator"
+                        OffContent="Off"
+                        OnContent="On"
+                        Toggled="AlwaysAdminToggle_Toggled" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        TextWrapping="Wrap"
+                        Text="When on, WinTask Scheduler relaunches elevated (with a UAC prompt) each time it starts, so it can create highest-privileges tasks and edit protected system tasks without choosing &#x201C;Restart as administrator&#x201D; every time." />
+                    <ToggleSwitch
+                        x:Name="AiToggle"
+                        AutomationProperties.AutomationId="AiToggle"
+                        Header="AI assistant (GitHub Copilot)"
+                        OffContent="Disabled"
+                        OnContent="Enabled"
+                        Toggled="AiToggle_Toggled" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        TextWrapping="Wrap"
+                        Text="Turning AI off hides the Assistant page and disables all in-app Copilot features. The bundled MCP server (for external agents) is unaffected." />
+                    <ToggleSwitch
+                        x:Name="OnlyTaskerToggle"
+                        AutomationProperties.AutomationId="OnlyTaskerToggle"
+                        Header="Show only tasks created by WinTask Scheduler"
+                        OffContent="Off"
+                        OnContent="On"
+                        Toggled="OnlyTaskerToggle_Toggled" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        TextWrapping="Wrap"
+                        Text="When on, every list (Tasks, Quick Launch, Running, Upcoming) hides tasks that weren't created by WinTask Scheduler. Other tasks aren't deleted. Turn this off to see them again." />
+                </StackPanel>
+            </Border>
+
+            <Border
+                Background="{ThemeResource LayerFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="20">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Cross-compatible by design" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}">
+                        WinTask Scheduler reads and writes the live Windows Task Scheduler store through the
+                        Task Scheduler V2 COM API. Every task you create, edit, enable, or delete here is
+                        the exact same task the built-in Task Scheduler manages; changes appear instantly
+                        in both apps, and tasks created in either tool are fully interoperable.
+                    </TextBlock>
+                    <TextBlock
+                        Margin="0,8,0,0"
+                        Text="{x:Bind ViewModel.ConnectionText, Mode=OneWay}"
+                        Style="{StaticResource CaptionTextBlockStyle}" />
+                </StackPanel>
+            </Border>
+
+            <Border
+                Background="{ThemeResource LayerFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="20">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Agent-ready (MCP)" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}">
+                        A bundled local MCP server (Tasker.Mcp) exposes the same engine over the Model
+                        Context Protocol, so AI agents can list, inspect, create, run, and manage your
+                        scheduled tasks through the same shared store.
+                    </TextBlock>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button AutomationProperties.AutomationId="InstallMcpCopilotButton" Click="InstallCopilot_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon FontSize="14" Glyph="&#xE756;" />
+                                <TextBlock Text="Install for Copilot CLI" />
+                            </StackPanel>
+                        </Button>
+                        <Button AutomationProperties.AutomationId="InstallMcpVSCodeButton" Click="InstallVSCode_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon FontSize="14" Glyph="&#xE756;" />
+                                <TextBlock Text="Install for VS Code" />
+                            </StackPanel>
+                        </Button>
+                        <Button AutomationProperties.AutomationId="InstallMcpClaudeButton" Click="InstallClaude_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon FontSize="14" Glyph="&#xE756;" />
+                                <TextBlock Text="Install for Claude Code" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                    <InfoBar
+                        AutomationProperties.AutomationId="McpInstallInfoBar"
+                        IsClosable="False"
+                        IsOpen="{x:Bind ViewModel.McpInstallOpen, Mode=OneWay}"
+                        Message="{x:Bind ViewModel.McpInstallStatus, Mode=OneWay}"
+                        Severity="{x:Bind ViewModel.McpInstallSeverity, Mode=OneWay}" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        TextWrapping="Wrap">
+                        The buttons above merge a "wintask-scheduler" stdio server into each tool's config
+                        file, preserving anything already there. Restart the tool afterward to pick it up.
+                    </TextBlock>
+                    <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                        <Expander.Header>
+                            <TextBlock Text="Manual setup &amp; troubleshooting" />
+                        </Expander.Header>
+                        <StackPanel Spacing="14">
+                            <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}">
+                                To set it up by hand, add the snippet below to the listed file (create the
+                                file if it doesn't exist), then fully restart the tool. The launch command
+                                is the same for every client and works once WinTask Scheduler is installed:
+                            </TextBlock>
+                            <TextBox
+                                AutomationProperties.AutomationId="McpPathBox"
+                                FontFamily="Consolas"
+                                Header="Launch command"
+                                IsReadOnly="True"
+                                IsSpellCheckEnabled="False"
+                                Text="{x:Bind ViewModel.McpServerCommand}" />
+
+                            <!--  Copilot CLI  -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="GitHub Copilot CLI" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock
+                                    FontFamily="Consolas"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Text="{x:Bind ViewModel.CopilotCliConfigPath}"
+                                    TextWrapping="Wrap" />
+                                <TextBlock
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Text="Tip: you can also run &#x201C;copilot&#x201D; then &#x201C;/mcp add&#x201D;. Restart the CLI after changes."
+                                    TextWrapping="Wrap" />
+                                <TextBox
+                                    AutomationProperties.AutomationId="CopilotCliSnippetBox"
+                                    AutomationProperties.Name="Copilot CLI MCP config snippet"
+                                    AcceptsReturn="True"
+                                    FontFamily="Consolas"
+                                    IsReadOnly="True"
+                                    IsSpellCheckEnabled="False"
+                                    Text="{x:Bind ViewModel.CopilotCliSnippet}"
+                                    TextWrapping="NoWrap" />
+                            </StackPanel>
+
+                            <!--  VS Code  -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="VS Code (Copilot Chat, Agent mode)" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock
+                                    FontFamily="Consolas"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Text="{x:Bind ViewModel.VSCodeConfigPath}"
+                                    TextWrapping="Wrap" />
+                                <TextBlock
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Text="Global file shown; for one project use a workspace .vscode\mcp.json instead. Reload VS Code, then choose Agent mode in Copilot Chat."
+                                    TextWrapping="Wrap" />
+                                <TextBox
+                                    AutomationProperties.AutomationId="VSCodeSnippetBox"
+                                    AutomationProperties.Name="VS Code MCP config snippet"
+                                    AcceptsReturn="True"
+                                    FontFamily="Consolas"
+                                    IsReadOnly="True"
+                                    IsSpellCheckEnabled="False"
+                                    Text="{x:Bind ViewModel.VSCodeSnippet}"
+                                    TextWrapping="NoWrap" />
+                            </StackPanel>
+
+                            <!--  Claude Code  -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Claude Code" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock
+                                    FontFamily="Consolas"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Text="{x:Bind ViewModel.ClaudeCodeConfigPath}"
+                                    TextWrapping="Wrap" />
+                                <TextBlock
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Text="User scope (applies to all projects). Restart Claude Code after changes."
+                                    TextWrapping="Wrap" />
+                                <TextBox
+                                    AutomationProperties.AutomationId="ClaudeSnippetBox"
+                                    AutomationProperties.Name="Claude Code MCP config snippet"
+                                    AcceptsReturn="True"
+                                    FontFamily="Consolas"
+                                    IsReadOnly="True"
+                                    IsSpellCheckEnabled="False"
+                                    Text="{x:Bind ViewModel.ClaudeSnippet}"
+                                    TextWrapping="NoWrap" />
+                            </StackPanel>
+
+                            <TextBlock
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                TextWrapping="Wrap">
+                                Troubleshooting: the command resolves from %LOCALAPPDATA%\Microsoft\WindowsApps
+                                (which is on PATH). If a tool reports &#x201C;command not found&#x201D;, fully
+                                restart it so it inherits your current PATH, or point it at the full path to
+                                mcp\Tasker.Mcp.exe inside the app's install folder.
+                            </TextBlock>
+                        </StackPanel>
+                    </Expander>
+                </StackPanel>
+            </Border>
+
+            <Border
+                Background="{ThemeResource LayerFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="20">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Tips" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}">
+                        • Use the folder tree to browse, and the search box to filter by name, action, or trigger.
+                        <LineBreak />
+                        • Creating tasks that "Run with highest privileges", or editing protected system tasks,
+                        requires running WinTask Scheduler as administrator.
+                        <LineBreak />
+                        • The editor's Advanced tab lets you author or paste raw Task Scheduler XML for full fidelity.
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

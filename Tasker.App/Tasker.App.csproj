@@ -1,0 +1,131 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>Tasker_App</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Platforms>x86;x64;ARM64</Platforms>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">win-$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture.ToString().ToLowerInvariant())</RuntimeIdentifier>
+    <PublishProfile Condition="Exists('Properties\PublishProfiles\win-$(Platform).pubxml')">win-$(Platform).pubxml</PublishProfile>
+    <UseWinUI>true</UseWinUI>
+    <WinUISDKReferences>false</WinUISDKReferences>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- Fully self-contained MSIX: bundle the .NET runtime and the Windows App SDK
+         runtime into the package so it has no external framework dependencies
+         (no Microsoft.WindowsAppRuntime package required on the target machine). -->
+    <SelfContained>true</SelfContained>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\**\*.png" />
+    <Content Include="Assets\AppIcon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Manifest Include="$(ApplicationManifest)" />
+  </ItemGroup>
+
+  <!--
+    Defining the "Msix" ProjectCapability here allows the Single-project MSIX Packaging
+    Tools extension to be activated for this project even if the Windows App SDK Nuget
+    package has not yet been restored.
+  -->
+  <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+    <ProjectCapability Include="Msix" />
+  </ItemGroup>
+
+  <!--
+    Microsoft.Windows.SDK.BuildTools.WinApp adds first-class support for
+    `dotnet run` on packaged WinUI apps: it hooks the .NET CLI Run target to
+    register a debug identity via the winapp CLI and launch the app with
+    package identity (AUMID).
+    Set <EnableWinAppRunSupport>false</EnableWinAppRunSupport> in a
+    <PropertyGroup> above to opt out.
+  -->
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.2.251219" />
+    <PackageReference Include="GitHub.Copilot.SDK" Version="1.0.0" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.1839" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.1.3" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools.WinApp" Version="0.3.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Tasker.Core\Tasker.Core.csproj" />
+  </ItemGroup>
+
+  <!-- Build and bundle the Tasker MCP server inside the app so it ships with it and the
+       Assistant / one-click installers can point at a real, always-present executable.
+       Copied into both the build output and the AppX deployment folder (the packaged app's
+       runtime base directory). -->
+  <Target Name="CopyTaskerMcp" AfterTargets="Build">
+    <MSBuild Projects="$(MSBuildThisFileDirectory)..\Tasker.Mcp\Tasker.Mcp.csproj" Targets="Restore;Build" Properties="Configuration=$(Configuration);RuntimeIdentifier=$(RuntimeIdentifier);SelfContained=true" ContinueOnError="true" />
+    <ItemGroup>
+      <!-- The MCP sub-build lands in bin\$(Configuration)\... when built AnyCPU, or
+           bin\$(Platform)\$(Configuration)\... when the Platform global (e.g. x64) propagates
+           (as it does under VS MSBuild / packaging). Glob both so the server is always staged. -->
+      <TaskerMcpFiles Include="$(MSBuildThisFileDirectory)..\Tasker.Mcp\bin\$(Configuration)\net10.0-windows10.0.26100.0\$(RuntimeIdentifier)\**\*.*" />
+      <TaskerMcpFiles Condition="'$(Platform)' != '' and '$(Platform)' != 'AnyCPU'" Include="$(MSBuildThisFileDirectory)..\Tasker.Mcp\bin\$(Platform)\$(Configuration)\net10.0-windows10.0.26100.0\$(RuntimeIdentifier)\**\*.*" />
+    </ItemGroup>
+    <Copy
+      SourceFiles="@(TaskerMcpFiles)"
+      DestinationFiles="@(TaskerMcpFiles->'$(OutDir)mcp\%(RecursiveDir)%(Filename)%(Extension)')"
+      SkipUnchangedFiles="true"
+      Condition="'@(TaskerMcpFiles)' != ''" />
+    <Copy
+      SourceFiles="@(TaskerMcpFiles)"
+      DestinationFiles="@(TaskerMcpFiles->'$(OutDir)AppX\mcp\%(RecursiveDir)%(Filename)%(Extension)')"
+      SkipUnchangedFiles="true"
+      Condition="'@(TaskerMcpFiles)' != '' and Exists('$(OutDir)AppX')" />
+  </Target>
+
+  <!--
+    Include the bundled MCP server (staged into $(OutDir)mcp by CopyTaskerMcp) in the real MSIX
+    package payload. MakeAppx builds the package from the computed payload, NOT from arbitrary files
+    a custom Copy dropped into the output folder; without this the manifest's windows.appExecutionAlias
+    (Executable="mcp\Tasker.Mcp.exe") fails MakeAppx validation ("the file ... doesn't exist in the
+    package"). We contribute to @(PackagingOutputs) (rather than @(AppxPackagePayload)) because
+    PackagingOutputs feeds BOTH the regular .msix payload AND the StoreUpload/bundle upload payload
+    (_UnfilteredAppxUploadPackagePayload) in Microsoft.Windows.SDK.BuildTools.MSIX.Packaging.targets;
+    AppxPackagePayload only reaches the non-upload package. The glob is captured into a dedicated item
+    and projected with the SOURCE item's qualified metadata to avoid an MSB4120 self-reference (which
+    would collapse every TargetPath to "mcp\" and collide). DependsOnTargets="CopyTaskerMcp" guarantees
+    the files are staged first. Runs only for packaging builds ('$(AppxPackage)' == 'true'). -->
+  <Target Name="AddTaskerMcpToAppxPayload"
+          DependsOnTargets="CopyTaskerMcp"
+          BeforeTargets="_ComputeAppxPackagePayload"
+          Condition="'$(AppxPackage)' == 'true'">
+    <ItemGroup>
+      <_TaskerMcpPayloadFile Include="$(OutDir)mcp\**\*.*" />
+      <PackagingOutputs Include="@(_TaskerMcpPayloadFile)">
+        <ProjectName>$(ProjectName)</ProjectName>
+        <OutputGroup>TaskerMcpServer</OutputGroup>
+        <TargetPath>mcp\%(_TaskerMcpPayloadFile.RecursiveDir)%(_TaskerMcpPayloadFile.Filename)%(_TaskerMcpPayloadFile.Extension)</TargetPath>
+      </PackagingOutputs>
+    </ItemGroup>
+  </Target>
+
+  <!--
+    Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution
+    Explorer "Package and Publish" context menu entry to be enabled for this project even if
+    the Windows App SDK Nuget package has not yet been restored.
+  -->
+  <PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+    <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
+  </PropertyGroup>
+
+  <!-- Publish Properties -->
+  <PropertyGroup>
+    <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
+    <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
+    <!-- Trimming is disabled: this app relies on reflection (WinUI/XAML, System.Text.Json in the
+         MCP tools, and the GitHub Copilot SDK), which the IL trimmer cannot fully preserve and
+         would break at runtime. ReadyToRun is kept for startup speed. -->
+    <PublishTrimmed>false</PublishTrimmed>
+  </PropertyGroup>
+</Project>
