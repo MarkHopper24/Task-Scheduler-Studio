@@ -1,7 +1,3 @@
-<h1 align="center"> UNDER CONSTRUCTION </h1>
-----
-----
-----
 <h1 align="center">
   <a href="https://apps.microsoft.com/detail/9N0FV2HZXKJG"><img src="https://raw.githubusercontent.com/MarkHopper24/wintask-scheduler/refs/heads/main/WinTask%20Logo.png" alt="WinTask Scheduler" height="60"></a><br>
   WinTask Scheduler
@@ -26,16 +22,16 @@ WinTask Scheduler is a modern WinUI 3 reimagining of the built-in Windows Task S
 The app pairs that engine with a clean Fluent interface and, optionally, AI. A built-in GitHub Copilot assistant lets you create and manage tasks in plain English, and a bundled local MCP server exposes the same engine to your favorite AI agents, so both the UI and agents always behave identically.
 
 ## Installation
-Method 1: Directly from the Microsoft Store [HERE](https://)
+Method 1: Directly from the Microsoft Store [HERE](https://apps.microsoft.com/detail/9N0FV2HZXKJG)
 
-Method 2: Downloading and installing the MSIX package directly from the latest GitHub release [HERE](https://) 
+Method 2: Downloading and installing the Store MSIX package directly from the latest GitHub release [HERE](https://) 
 
 Method 3: From Windows Package Manager using winget via command line
 ```
-winget install --name
+winget install "WinTask Scheduler" --source msstore
 ```
 
-For now, WinTask Scheduler requires an internet connection on installation  for license acquisition through the Microsoft Store (this includes the build hosted in this repository). After first installation, it can be used fully offline.
+For now, WinTask Scheduler requires an internet connection on installation for license acquisition through the Microsoft Store (this includes the build hosted in this repository). After first installation, it can be used fully offline.
 
 Method 4: Building the solution on your own in Visual Studio using the provided source code (this method does not require a network connection).
 
@@ -62,6 +58,3 @@ Method 4: Building the solution on your own in Visual Studio using the provided 
 
 ---
 [@Mark_Hopper24 (Twitter)](https://twitter.com/Mark_Hopper24)
-
-
-
