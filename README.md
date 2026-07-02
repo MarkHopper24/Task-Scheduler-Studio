@@ -48,7 +48,7 @@ Method 4: Building the solution on your own in Visual Studio using the provided 
 - Personalize the look with Mica Alt, Mica, or Acrylic backdrops and System, Light, or Dark themes, remembered across restarts.
 
 ## Disclaimer
--WinTask Scheduler was created by a Microsoft employee as an individual personal project and proof of concept. It is not an official Microsoft product, service, or offering, and it is not affiliated with, endorsed by, or supported by Microsoft. All work and opinions are the developer's own.
+WinTask Scheduler was created by a Microsoft employee as an individual personal project and proof of concept. It is not an official Microsoft product, service, or offering, and it is not affiliated with, endorsed by, or supported by Microsoft. All work and opinions are the developer's own.
 
 ## Support
 - This project is a work in progress. Any contributions, suggestions, fixes, bug reports, and feature requests are welcome.
