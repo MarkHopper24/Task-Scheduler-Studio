@@ -14,7 +14,7 @@
   <a href="#disclaimer">Disclaimer</a> •
   <a href="#license">License</a>
 </p>
-
+  <a href="https://apps.microsoft.com/detail/9N0FV2HZXKJG"><img src="https://raw.githubusercontent.com/MarkHopper24/wintask-scheduler/refs/heads/main/screenshots/store/13.png" alt="WinTask Scheduler" height="800"></a>
 
 ## Overview
 WinTask Scheduler is a modern WinUI 3 reimagining of the built-in Windows Task Scheduler. It reads and writes the live Windows Task Scheduler store through the Task Scheduler V2 COM API, so everything you create is a normal scheduled task: visible in taskschd.msc, queryable with schtasks, and fully interoperable with the built-in tool. There is no separate database. Create a task in either tool and it appears, runs, and edits identically in the other.
@@ -24,7 +24,7 @@ The app pairs that engine with a clean Fluent interface and, optionally, AI. A b
 ## Installation
 Method 1: Directly from the Microsoft Store [HERE](https://apps.microsoft.com/detail/9N0FV2HZXKJG)
 
-Method 2: Downloading and installing the Store MSIX package directly from the latest GitHub release [HERE](https://) 
+Method 2: Downloading and installing the Store MSIX package directly from the latest GitHub release [HERE](https://github.com/MarkHopper24/wintask-scheduler/releases/latest) 
 
 Method 3: From Windows Package Manager using winget via command line
 ```
