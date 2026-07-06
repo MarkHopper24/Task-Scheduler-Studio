@@ -14,12 +14,12 @@
                     Width="44"
                     Height="44"
                     VerticalAlignment="Center"
-                    AutomationProperties.Name="Windows Tasker logo"
+                    AutomationProperties.Name="Windows Task Studio logo"
                     Source="ms-appx:///Assets/Square44x44Logo.scale-200.png" />
                 <StackPanel VerticalAlignment="Center">
-                    <TextBlock Text="Windows Tasker" Style="{StaticResource TitleTextBlockStyle}" />
+                    <TextBlock Text="Windows Task Studio" Style="{StaticResource TitleTextBlockStyle}" />
                     <TextBlock
-                        Text="A modern replacement for Windows Task Scheduler"
+                        Text="A modern take on Windows Task Scheduler"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
             </StackPanel>
@@ -91,6 +91,18 @@
                         TextWrapping="Wrap"
                         Visibility="Collapsed" />
                     <ToggleSwitch
+                        x:Name="AlwaysAdminToggle"
+                        AutomationProperties.AutomationId="AlwaysAdminToggle"
+                        Header="Always run as administrator"
+                        OffContent="Off"
+                        OnContent="On"
+                        Toggled="AlwaysAdminToggle_Toggled" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        TextWrapping="Wrap"
+                        Text="When on, Windows Task Studio relaunches elevated (with a UAC prompt) each time it starts, so it can create highest-privileges tasks and edit protected system tasks without choosing &#x201C;Restart as administrator&#x201D; every time." />
+                    <ToggleSwitch
                         x:Name="AiToggle"
                         AutomationProperties.AutomationId="AiToggle"
                         Header="AI assistant (GitHub Copilot)"
@@ -105,7 +117,7 @@
                     <ToggleSwitch
                         x:Name="OnlyTaskerToggle"
                         AutomationProperties.AutomationId="OnlyTaskerToggle"
-                        Header="Show only tasks created by Windows Tasker"
+                        Header="Show only tasks created by Windows Task Studio"
                         OffContent="Off"
                         OnContent="On"
                         Toggled="OnlyTaskerToggle_Toggled" />
@@ -113,7 +125,7 @@
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         Style="{StaticResource CaptionTextBlockStyle}"
                         TextWrapping="Wrap"
-                        Text="When on, every list (Tasks, Quick Launch, Running, Upcoming) hides tasks that weren't created by Windows Tasker. Other tasks aren't deleted &#x2014; turn this off to see them again." />
+                        Text="When on, every list (Tasks, Quick Launch, Running, Upcoming) hides tasks that weren't created by Windows Task Studio. Other tasks aren't deleted. Turn this off to see them again." />
                 </StackPanel>
             </Border>
 
@@ -126,9 +138,9 @@
                 <StackPanel Spacing="8">
                     <TextBlock Text="Cross-compatible by design" Style="{StaticResource SubtitleTextBlockStyle}" />
                     <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}">
-                        Windows Tasker reads and writes the live Windows Task Scheduler store through the
+                        Windows Task Studio reads and writes the live Windows Task Scheduler store through the
                         Task Scheduler V2 COM API. Every task you create, edit, enable, or delete here is
-                        the exact same task the built-in Task Scheduler manages — changes appear instantly
+                        the exact same task the built-in Task Scheduler manages; changes appear instantly
                         in both apps, and tasks created in either tool are fully interoperable.
                     </TextBlock>
                     <TextBlock
@@ -181,7 +193,7 @@
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         Style="{StaticResource CaptionTextBlockStyle}"
                         TextWrapping="Wrap">
-                        The buttons above merge a "windows-tasker" stdio server into each tool's config
+                        The buttons above merge a "wintask-scheduler" stdio server into each tool's config
                         file, preserving anything already there. Restart the tool afterward to pick it up.
                     </TextBlock>
                     <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
@@ -192,7 +204,7 @@
                             <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}">
                                 To set it up by hand, add the snippet below to the listed file (create the
                                 file if it doesn't exist), then fully restart the tool. The launch command
-                                is the same for every client and works once Windows Tasker is installed:
+                                is the same for every client and works once Windows Task Studio is installed:
                             </TextBlock>
                             <TextBox
                                 AutomationProperties.AutomationId="McpPathBox"
@@ -217,6 +229,8 @@
                                     Text="Tip: you can also run &#x201C;copilot&#x201D; then &#x201C;/mcp add&#x201D;. Restart the CLI after changes."
                                     TextWrapping="Wrap" />
                                 <TextBox
+                                    AutomationProperties.AutomationId="CopilotCliSnippetBox"
+                                    AutomationProperties.Name="Copilot CLI MCP config snippet"
                                     AcceptsReturn="True"
                                     FontFamily="Consolas"
                                     IsReadOnly="True"
@@ -227,7 +241,7 @@
 
                             <!--  VS Code  -->
                             <StackPanel Spacing="4">
-                                <TextBlock Text="VS Code (Copilot Chat &#x2014; Agent mode)" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock Text="VS Code (Copilot Chat, Agent mode)" Style="{StaticResource BodyStrongTextBlockStyle}" />
                                 <TextBlock
                                     FontFamily="Consolas"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -240,6 +254,8 @@
                                     Text="Global file shown; for one project use a workspace .vscode\mcp.json instead. Reload VS Code, then choose Agent mode in Copilot Chat."
                                     TextWrapping="Wrap" />
                                 <TextBox
+                                    AutomationProperties.AutomationId="VSCodeSnippetBox"
+                                    AutomationProperties.Name="VS Code MCP config snippet"
                                     AcceptsReturn="True"
                                     FontFamily="Consolas"
                                     IsReadOnly="True"
@@ -263,6 +279,8 @@
                                     Text="User scope (applies to all projects). Restart Claude Code after changes."
                                     TextWrapping="Wrap" />
                                 <TextBox
+                                    AutomationProperties.AutomationId="ClaudeSnippetBox"
+                                    AutomationProperties.Name="Claude Code MCP config snippet"
                                     AcceptsReturn="True"
                                     FontFamily="Consolas"
                                     IsReadOnly="True"
@@ -275,10 +293,12 @@
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 TextWrapping="Wrap">
-                                Troubleshooting: the command resolves from %LOCALAPPDATA%\Microsoft\WindowsApps
-                                (which is on PATH). If a tool reports &#x201C;command not found&#x201D;, fully
-                                restart it so it inherits your current PATH, or point it at the full path to
-                                mcp\Tasker.Mcp.exe inside the app's install folder.
+                                Troubleshooting: for an installed app, the command points at a copy of the
+                                server staged in %LOCALAPPDATA%\WindowsTasker\mcp, refreshed automatically
+                                every time Windows Task Studio starts, so external tools never need access to
+                                the protected WindowsApps folder. If a tool reports &#x201C;command not
+                                found&#x201D;, open Windows Task Studio once to refresh the staged copy, then
+                                fully restart the tool so it inherits the current PATH and re-reads its config.
                             </TextBlock>
                         </StackPanel>
                     </Expander>
@@ -297,7 +317,7 @@
                         • Use the folder tree to browse, and the search box to filter by name, action, or trigger.
                         <LineBreak />
                         • Creating tasks that "Run with highest privileges", or editing protected system tasks,
-                        requires running Windows Tasker as administrator.
+                        requires running Windows Task Studio as administrator.
                         <LineBreak />
                         • The editor's Advanced tab lets you author or paste raw Task Scheduler XML for full fidelity.
                     </TextBlock>

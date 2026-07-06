@@ -178,7 +178,7 @@ public partial class AssistantPageViewModel : ObservableObject
             ConnectionStatus = "Using a saved GitHub token.";
 
         Messages.Add(ChatMessage.From(ChatRole.Assistant,
-            "Hi! Tell me what you'd like to schedule \u2014 for example, " +
+            "Hi! Tell me what you'd like to schedule. For example, " +
             "\u201Crun Notepad every weekday at 9am\u201D or \u201Cback up my docs folder nightly.\u201D " +
             "I'll ask for anything I'm missing, then create the task for you."));
     }

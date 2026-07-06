@@ -75,9 +75,24 @@ public partial class TasksPageViewModel : ObservableObject
         Services.AppEvents.TasksChanged += OnTasksChangedExternally;
     }
 
+    /// <summary>Unsubscribes from the static <see cref="Services.AppEvents.TasksChanged"/> event.
+    /// The owning page calls this on navigate-away: a fresh VM is created on every visit to the
+    /// Tasks page, so without this the old instances stay pinned by the static delegate chain and
+    /// each keeps firing a redundant refresh on every task change.</summary>
+    public void Cleanup()
+    {
+        Services.AppEvents.TasksChanged -= OnTasksChangedExternally;
+    }
+
     private void OnTasksChangedExternally()
     {
-        _dispatcher.TryEnqueue(async () => await RefreshAsync());
+        // async lambda on TryEnqueue is effectively async void — observe the Task so an unexpected
+        // failure surfaces as a status message instead of an app-level unhandled exception.
+        _dispatcher.TryEnqueue(async () =>
+        {
+            try { await RefreshAsync(); }
+            catch (Exception ex) { ShowError($"Could not refresh: {ex.Message}"); }
+        });
     }
 
     public async Task InitializeAsync()
@@ -94,7 +109,7 @@ public partial class TasksPageViewModel : ObservableObject
 
             HashSet<string>? visible = null;
             Dictionary<string, int>? taskerCounts = null;
-            // Global "only Windows Tasker tasks" filter: also hide folders whose subtree
+            // Global "only Windows Task Studio tasks" filter: also hide folders whose subtree
             // contains no Tasker-created tasks.
             if (Services.AppSettings.OnlyTaskerTasks)
             {
@@ -133,10 +148,36 @@ public partial class TasksPageViewModel : ObservableObject
         }
     }
 
+    private bool _reloadPending;
+
     public async Task LoadTasksAsync()
     {
-        if (IsBusy) return;
+        // Coalesce rather than drop: if a load is already running (e.g. the user clicked another
+        // folder mid-load), remember another pass is needed and re-run once the current one
+        // finishes, so the task list always matches the latest selected folder.
+        if (IsBusy) { _reloadPending = true; return; }
         IsBusy = true;
+        try
+        {
+            do
+            {
+                _reloadPending = false;
+                await ReloadTasksAsync();
+            }
+            while (_reloadPending);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>Reloads the task table for the current folder. Unlike <see cref="LoadTasksAsync"/>
+    /// this does not touch <see cref="IsBusy"/>, so it can be awaited from operations that already
+    /// hold the busy flag (run/stop/enable/disable/delete/bulk) — otherwise the self-guard on
+    /// <see cref="LoadTasksAsync"/> would skip the refresh and leave the list stale.</summary>
+    private async Task ReloadTasksAsync()
+    {
         HasError = false;
         try
         {
@@ -150,17 +191,13 @@ public partial class TasksPageViewModel : ObservableObject
         {
             ShowError($"Could not load tasks: {ex.Message}");
         }
-        finally
-        {
-            IsBusy = false;
-        }
     }
 
     private void ApplyFilter()
     {
         IEnumerable<TaskSummaryDto> view = _allTasks;
 
-        // Global preference (Settings): hide everything not created by Windows Tasker.
+        // Global preference (Settings): hide everything not created by Windows Task Studio.
         if (Services.AppSettings.OnlyTaskerTasks)
             view = view.Where(t => t.CreatedByTasker);
 
@@ -242,23 +279,54 @@ public partial class TasksPageViewModel : ObservableObject
     [RelayCommand]
     private Task DisableSelectedAsync() => BulkAsync(p => TaskerClient.SetEnabledAsync(p, false), "Disabled");
 
-    public async Task BulkAsync(Func<string, Task<OperationResult>> op, string verb)
+    public async Task BulkAsync(Func<string, Task<OperationResult>> op, string verb, IReadOnlyList<string>? paths = null)
     {
-        var paths = _selectedPaths.ToList();
-        if (paths.Count == 0) return;
+        var list = (paths ?? _selectedPaths).ToList();
+        if (list.Count == 0) return;
         IsBusy = true;
         try
         {
             var ok = 0;
-            foreach (var p in paths)
+            foreach (var p in list)
             {
                 var r = await op(p);
                 if (r.Success) ok++;
             }
-            ShowInfo($"{verb} {ok} of {paths.Count} task(s).");
-            await LoadTasksAsync();
+            ShowInfo($"{verb} {ok} of {list.Count} task(s).");
+            await ReloadTasksAsync();
         }
         finally { IsBusy = false; }
+    }
+
+    /// <summary>Moves a task to a different folder: exports its raw Task Scheduler XML (full
+    /// fidelity, unlike rebuilding from the structured fields), registers it at the destination
+    /// path while preserving the original <c>&lt;Source&gt;</c> (same as backup restore, so a
+    /// moved task keeps its original "created by" classification), then removes the original.
+    /// Fails without side effects if a task already exists at the destination.</summary>
+    public async Task<OperationResult> MoveTaskAsync(string sourcePath, string destFolder)
+    {
+        var slash = sourcePath.LastIndexOf('\\');
+        var name = slash >= 0 ? sourcePath[(slash + 1)..] : sourcePath;
+
+        destFolder = string.IsNullOrWhiteSpace(destFolder) ? "\\" : destFolder.Trim();
+        if (!destFolder.StartsWith('\\')) destFolder = "\\" + destFolder;
+        var destPath = destFolder.EndsWith('\\') ? destFolder + name : destFolder + "\\" + name;
+
+        if (string.Equals(sourcePath, destPath, StringComparison.OrdinalIgnoreCase))
+            return OperationResult.Ok($"\u201C{name}\u201D is already in that folder.", sourcePath);
+
+        if (await TaskerClient.GetTaskAsync(destPath) is not null)
+            return OperationResult.Fail($"A task already exists at \u201C{destPath}\u201D.");
+
+        string xml;
+        try { xml = await TaskerClient.ExportXmlAsync(sourcePath); }
+        catch (Exception ex) { return OperationResult.Fail($"Couldn't read '{name}': {ex.Message}"); }
+
+        var result = await TaskerClient.ImportXmlAsync(destFolder, name, xml, stampSource: false);
+        if (!result.Success) return result;
+
+        await TaskerClient.DeleteTaskAsync(sourcePath);
+        return OperationResult.Ok($"Moved '{name}' to {destFolder}.", destPath);
     }
 
     partial void OnSearchTextChanged(string value) => ApplyFilter();
@@ -371,7 +439,7 @@ public partial class TasksPageViewModel : ObservableObject
             var result = await op();
             if (result.Success) ShowInfo(result.Message);
             else ShowError(result.Message);
-            await LoadTasksAsync();
+            await ReloadTasksAsync();
             ReselectByPath(path);
             if (path is not null) await LoadDetailAsync(path);
         }
@@ -381,7 +449,9 @@ public partial class TasksPageViewModel : ObservableObject
     private void ReselectByPath(string? path)
     {
         if (path is null) return;
-        SelectedTask = Tasks.FirstOrDefault(t => t.Path == path);
+        // Task Scheduler paths are case-insensitive; an ordinal (case-sensitive) match would drop
+        // the selection right after Run/Stop/Toggle if the scheduler normalised the path casing.
+        SelectedTask = Tasks.FirstOrDefault(t => string.Equals(t.Path, path, StringComparison.OrdinalIgnoreCase));
     }
 
     public void ShowError(string message)

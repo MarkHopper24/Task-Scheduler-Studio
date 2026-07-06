@@ -50,7 +50,9 @@ public static class BackupService
             var name = Path.GetFileNameWithoutExtension(entry.Name);
             var folder = CombineFolder(targetFolder, relDir);
 
-            var result = await TaskerClient.ImportXmlAsync(folder, name, xml);
+            // Restore preserves each task's original <Source> (don't re-stamp as Tasker-created),
+            // so a restored backup keeps the same "created by Windows Task Studio" classification it had.
+            var result = await TaskerClient.ImportXmlAsync(folder, name, xml, stampSource: false);
             if (result.Success) restored++; else failed++;
         }
         return (restored, failed);

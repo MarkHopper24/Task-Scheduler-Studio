@@ -24,7 +24,7 @@ public sealed class ChatMessage
     {
         ChatRole.User => "You",
         ChatRole.Assistant => "Copilot",
-        ChatRole.Tool => "Windows Tasker",
+        ChatRole.Tool => "Windows Task Studio",
         ChatRole.Error => "Error",
         _ => string.Empty,
     };

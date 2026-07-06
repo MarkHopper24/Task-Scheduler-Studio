@@ -55,8 +55,8 @@ public static class TaskerClient
     public static Task<OperationResult> CreateOrUpdateAsync(TaskCreateRequest request) =>
         Run(s => s.CreateOrUpdate(request));
 
-    public static Task<OperationResult> ImportXmlAsync(string folder, string name, string xml) =>
-        Run(s => s.ImportXml(folder, name, xml));
+    public static Task<OperationResult> ImportXmlAsync(string folder, string name, string xml, bool stampSource = true) =>
+        Run(s => s.ImportXml(folder, name, xml, null, null, stampSource));
 
     public static Task<(string connectedTo, Version version)> GetConnectionInfoAsync() =>
         Run(s => (s.ConnectedTo, s.HighestSupportedVersion));

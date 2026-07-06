@@ -17,7 +17,7 @@ namespace Tasker.Mcp;
 internal static class Program
 {
     private const string ProtocolVersion = "2024-11-05";
-    private const string ServerName = "windows-tasker";
+    private const string ServerName = "wintask-scheduler";
     private const string ServerVersion = "1.0.0";
 
     private static readonly JsonSerializerOptions JsonOpts = new()
@@ -38,7 +38,7 @@ internal static class Program
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"[windows-tasker] failed to connect to Task Scheduler: {ex.Message}");
+            Console.Error.WriteLine($"[wintask-scheduler] failed to connect to Task Scheduler: {ex.Message}");
             return 1;
         }
 
@@ -52,7 +52,7 @@ internal static class Program
             try { request = JsonNode.Parse(line); }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"[windows-tasker] bad JSON: {ex.Message}");
+                Console.Error.WriteLine($"[wintask-scheduler] bad JSON: {ex.Message}");
                 continue;
             }
             if (request is null) continue;
@@ -60,7 +60,7 @@ internal static class Program
             try { HandleMessage(request); }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"[windows-tasker] handler error: {ex}");
+                Console.Error.WriteLine($"[wintask-scheduler] handler error: {ex}");
                 var id = request["id"];
                 if (id is not null)
                     WriteError(id.DeepClone(), -32603, ex.Message);

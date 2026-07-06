@@ -29,6 +29,26 @@
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
             <NavigationViewItem
+                x:Name="DesignerItem"
+                AutomationProperties.AutomationId="NavDesigner"
+                Content="Designer"
+                Tag="Designer"
+                ToolTipService.ToolTip="Build a task visually">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE9D9;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem
+                x:Name="LibraryItem"
+                AutomationProperties.AutomationId="NavLibrary"
+                Content="Library"
+                Tag="Library"
+                ToolTipService.ToolTip="Ready-made PowerShell scripts">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE82D;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem
                 x:Name="QuickLaunchItem"
                 AutomationProperties.AutomationId="NavQuickLaunch"
                 Content="Quick Launch"

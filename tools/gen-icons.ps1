@@ -1,6 +1,6 @@
 param(
     [string]$Source = "C:\Users\Markh\OneDrive\Pictures\WinTasker.jpg",
-    [string]$OutDir = "D:\Windows Tasker\Tasker.App\Assets"
+    [string]$OutDir = "D:\WinTask Scheduler\Tasker.App\Assets"
 )
 
 Add-Type -AssemblyName System.Drawing

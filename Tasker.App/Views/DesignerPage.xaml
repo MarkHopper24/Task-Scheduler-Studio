@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="Tasker_App.Views.DesignerPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Tasker_App.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:helpers="using:Tasker_App.Helpers"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:Tasker_App.ViewModels"
+    mc:Ignorable="d">
+
+    <Page.Resources>
+        <Style x:Key="SectionLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            <Setter Property="Margin" Value="2,4,0,2" />
+        </Style>
+        <Style x:Key="AddNodeButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="40" />
+            <Setter Property="Height" Value="40" />
+            <Setter Property="CornerRadius" Value="20" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+        </Style>
+        <!--  Fixed-height slot so every connection between nodes has identical spacing,
+              whether or not it carries an add (+) button.  -->
+        <Style x:Key="ConnectorSlotStyle" TargetType="Grid">
+            <Setter Property="Height" Value="60" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="ConnectorLineStyle" TargetType="Rectangle">
+            <Setter Property="Width" Value="2" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="Fill" Value="{ThemeResource ControlStrongStrokeColorDefaultBrush}" />
+        </Style>
+        <Style x:Key="FlowCardStyle" TargetType="Expander">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+        </Style>
+    </Page.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!--  Header bar: flow name + actions  -->
+        <Border
+            Grid.Row="0"
+            Padding="24,16"
+            Background="{ThemeResource LayerFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="0,0,0,1">
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Spacing="2">
+                    <TextBlock
+                        Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Text="{x:Bind ViewModel.Title, Mode=OneWay}" />
+                    <TextBox
+                        x:Name="NameBox"
+                        AutomationProperties.AutomationId="DesignerName"
+                        FontSize="24"
+                        FontWeight="SemiBold"
+                        MaxWidth="560"
+                        HorizontalAlignment="Left"
+                        BorderThickness="0"
+                        Background="Transparent"
+                        Padding="0"
+                        PlaceholderText="Name this task"
+                        Text="{x:Bind ViewModel.TaskName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <Button
+                        AutomationProperties.AutomationId="DesignerFormEditor"
+                        Click="OpenFormEditor_Click"
+                        ToolTipService.ToolTip="Switch to the classic form editor for this task">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon FontSize="14" Glyph="&#xE8A5;" />
+                            <TextBlock Text="Form editor" />
+                        </StackPanel>
+                    </Button>
+                    <Button AutomationProperties.AutomationId="DesignerCancel" Click="Cancel_Click" Content="Cancel" />
+                    <Button
+                        AutomationProperties.AutomationId="DesignerSave"
+                        Click="Save_Click"
+                        Content="Save task"
+                        Style="{StaticResource AccentButtonStyle}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <ScrollViewer Grid.Row="2" Padding="24" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel
+                Width="660"
+                HorizontalAlignment="Center"
+                Spacing="0">
+
+                <!--  When  -->
+                <TextBlock Style="{StaticResource SectionLabelStyle}" Text="WHEN THIS RUNS" />
+                <Border
+                    Padding="16"
+                    Margin="0,0,0,6"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Visibility="{x:Bind helpers:Format.VisibleWhenEmpty(ViewModel.Triggers.Count), Mode=OneWay}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <FontIcon FontSize="16" Glyph="&#xE787;" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="Add a trigger to choose when this task runs."
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <ItemsControl ItemsSource="{x:Bind ViewModel.Triggers}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:TriggerEditViewModel">
+                            <Expander IsExpanded="{x:Bind IsExpanded, Mode=TwoWay}" Style="{StaticResource FlowCardStyle}">
+                                <Expander.Header>
+                                    <Grid ColumnSpacing="12" Padding="0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <FontIcon
+                                            Grid.Column="0"
+                                            VerticalAlignment="Center"
+                                            FontSize="18"
+                                            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                            Glyph="{x:Bind Glyph, Mode=OneWay}" />
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Trigger" />
+                                            <TextBlock
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                Style="{StaticResource CaptionTextBlockStyle}"
+                                                Text="{x:Bind Summary, Mode=OneWay}"
+                                                TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                        <Button
+                                            Grid.Column="2"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            Click="RemoveTrigger_Click"
+                                            ToolTipService.ToolTip="Remove trigger">
+                                            <FontIcon FontSize="14" Glyph="&#xE74D;" />
+                                        </Button>
+                                    </Grid>
+                                </Expander.Header>
+                                <controls:TriggerEditorControl ViewModel="{x:Bind}" />
+                            </Expander>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Grid Style="{StaticResource ConnectorSlotStyle}">
+                    <Rectangle Style="{StaticResource ConnectorLineStyle}" />
+                    <Button
+                        x:Name="AddTriggerButton"
+                        AutomationProperties.AutomationId="DesignerAddTrigger"
+                        Click="AddTrigger_Click"
+                        Style="{StaticResource AddNodeButtonStyle}"
+                        ToolTipService.ToolTip="Add a trigger">
+                        <FontIcon FontSize="16" Glyph="&#xE710;" />
+                    </Button>
+                </Grid>
+
+                <!--  Only run if  -->
+                <TextBlock Style="{StaticResource SectionLabelStyle}" Text="ONLY RUN IF (OPTIONAL)" />
+                <Expander Style="{StaticResource FlowCardStyle}">
+                    <Expander.Header>
+                        <Grid ColumnSpacing="12" Padding="0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <FontIcon
+                                Grid.Column="0"
+                                VerticalAlignment="Center"
+                                FontSize="18"
+                                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                Glyph="&#xE9F5;" />
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Conditions" />
+                                <TextBlock
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Text="{x:Bind ViewModel.ConditionsSummary, Mode=OneWay}"
+                                    TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </Grid>
+                    </Expander.Header>
+                    <StackPanel Spacing="10">
+                        <ToggleSwitch Header="Allow task to be run on demand" IsOn="{x:Bind ViewModel.AllowDemandStart, Mode=TwoWay}" />
+                        <ToggleSwitch Header="Run as soon as possible after a missed start" IsOn="{x:Bind ViewModel.StartWhenAvailable, Mode=TwoWay}" />
+                        <ToggleSwitch Header="Start only if a network connection is available" IsOn="{x:Bind ViewModel.RunOnlyIfNetworkAvailable, Mode=TwoWay}" />
+                        <ToggleSwitch Header="Start only if the computer is on AC power" IsOn="{x:Bind ViewModel.DisallowStartIfOnBatteries, Mode=TwoWay}" />
+                        <ToggleSwitch Header="Stop if the computer switches to battery power" IsOn="{x:Bind ViewModel.StopIfGoingOnBatteries, Mode=TwoWay}" />
+                        <ToggleSwitch Header="Wake the computer to run this task" IsOn="{x:Bind ViewModel.WakeToRun, Mode=TwoWay}" />
+                        <ToggleSwitch Header="Start only if the computer is idle" IsOn="{x:Bind ViewModel.RunOnlyIfIdle, Mode=TwoWay}" />
+                        <ToggleSwitch Header="Restart the task if it fails" IsOn="{x:Bind ViewModel.RestartOnFailure, Mode=TwoWay}" />
+                        <NumberBox
+                            Header="Number of restart attempts"
+                            Minimum="0"
+                            SpinButtonPlacementMode="Inline"
+                            Value="{x:Bind ViewModel.RestartCount, Mode=TwoWay}" />
+                        <ComboBox
+                            Header="Stop the task if it runs longer than"
+                            DisplayMemberPath="Label"
+                            HorizontalAlignment="Stretch"
+                            ItemsSource="{x:Bind ViewModel.TimeLimitOptions}"
+                            SelectedItem="{x:Bind ViewModel.SelectedTimeLimit, Mode=TwoWay}" />
+                        <ComboBox
+                            Header="If the task is already running, then the following rule applies"
+                            DisplayMemberPath="Label"
+                            HorizontalAlignment="Stretch"
+                            ItemsSource="{x:Bind ViewModel.InstancesOptions}"
+                            SelectedItem="{x:Bind ViewModel.SelectedInstances, Mode=TwoWay}" />
+                    </StackPanel>
+                </Expander>
+
+                <Grid Style="{StaticResource ConnectorSlotStyle}">
+                    <Rectangle Style="{StaticResource ConnectorLineStyle}" />
+                </Grid>
+
+                <!--  Do  -->
+                <TextBlock Style="{StaticResource SectionLabelStyle}" Text="DO THIS" />
+                <Border
+                    Padding="16"
+                    Margin="0,0,0,6"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Visibility="{x:Bind helpers:Format.VisibleWhenEmpty(ViewModel.Actions.Count), Mode=OneWay}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <FontIcon FontSize="16" Glyph="&#xE756;" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="Add an action to choose what this task does."
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <ItemsControl ItemsSource="{x:Bind ViewModel.Actions}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ActionEditViewModel">
+                            <Expander IsExpanded="{x:Bind IsExpanded, Mode=TwoWay}" Style="{StaticResource FlowCardStyle}">
+                                <Expander.Header>
+                                    <Grid ColumnSpacing="12" Padding="0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <FontIcon
+                                            Grid.Column="0"
+                                            VerticalAlignment="Center"
+                                            FontSize="18"
+                                            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                            Glyph="{x:Bind Glyph, Mode=OneWay}" />
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Action" />
+                                            <TextBlock
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                Style="{StaticResource CaptionTextBlockStyle}"
+                                                Text="{x:Bind Summary, Mode=OneWay}"
+                                                TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                        <Button
+                                            Grid.Column="2"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            Click="RemoveAction_Click"
+                                            ToolTipService.ToolTip="Remove action">
+                                            <FontIcon FontSize="14" Glyph="&#xE74D;" />
+                                        </Button>
+                                    </Grid>
+                                </Expander.Header>
+                                <controls:ActionEditorControl ViewModel="{x:Bind}" />
+                            </Expander>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Grid Style="{StaticResource ConnectorSlotStyle}">
+                    <Rectangle Style="{StaticResource ConnectorLineStyle}" />
+                    <Button
+                        x:Name="AddActionButton"
+                        AutomationProperties.AutomationId="DesignerAddAction"
+                        Click="AddAction_Click"
+                        Style="{StaticResource AddNodeButtonStyle}"
+                        ToolTipService.ToolTip="Add an action">
+                        <FontIcon FontSize="16" Glyph="&#xE710;" />
+                    </Button>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

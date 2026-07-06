@@ -6,12 +6,12 @@ using Tasker.Core;
 namespace Tasker_App.Services;
 
 /// <summary>
-/// Installs the bundled Windows Tasker MCP server into the GitHub Copilot CLI and VS Code MCP
+/// Installs the bundled Windows Task Studio MCP server into the GitHub Copilot CLI and VS Code MCP
 /// configurations by merging an entry into the right config file (preserving any existing servers).
 /// </summary>
 public static class McpInstaller
 {
-    public const string ServerName = "windows-tasker";
+    public const string ServerName = "wintask-scheduler";
 
     public static string McpExePath => CopilotAssistant.McpExePath;
     public static bool McpAvailable => File.Exists(McpExePath);

@@ -102,7 +102,7 @@
                     </StackPanel>
                 </Button>
                 <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}">
-                    Uses the GitHub CLI (gh) to sign in interactively &#x2014; it reuses your existing
+                    Uses the GitHub CLI (gh) to sign in interactively; it reuses your existing
                     gh session if you have one, otherwise opens the GitHub web sign-in. A Copilot
                     subscription is required. Alternatively, paste a GitHub token with Copilot access:
                 </TextBlock>
@@ -181,7 +181,7 @@
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="vm:AssistantSuggestion">
-                    <Button Click="Suggestion_Click">
+                    <Button Click="Suggestion_Click" AutomationProperties.Name="{x:Bind Label}">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon FontSize="14" Glyph="{x:Bind Glyph}" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
                             <TextBlock Text="{x:Bind Label}" />

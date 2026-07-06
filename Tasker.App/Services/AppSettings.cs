@@ -17,6 +17,7 @@ public static class AppSettings
     private const string OnlyTaskerTasksKey = "OnlyTaskerTasks";
     private const string StartPageKey = "StartPage";
     private const string AiEnabledKey = "AiEnabled";
+    private const string AlwaysRunAsAdminKey = "AlwaysRunAsAdmin";
 
     private static ApplicationDataContainer Local => ApplicationData.Current.LocalSettings;
 
@@ -36,12 +37,22 @@ public static class AppSettings
         set => Local.Values[IncludeSubfoldersKey] = value;
     }
 
-    /// <summary>When true, the Tasks list only shows tasks created by Windows Tasker
-    /// (RegistrationInfo Source == "Windows Tasker") and hides all other Task Scheduler tasks.</summary>
+    /// <summary>When true, the Tasks list only shows tasks created by Windows Task Studio
+    /// (RegistrationInfo Source matches <see cref="Tasker.Core.TaskerService.AppSource"/> or its
+    /// prior product name) and hides all other Task Scheduler tasks.</summary>
     public static bool OnlyTaskerTasks
     {
         get => Local.Values[OnlyTaskerTasksKey] is bool b ? b : false;
         set => Local.Values[OnlyTaskerTasksKey] = value;
+    }
+
+    /// <summary>When true, Windows Task Studio relaunches elevated (with a UAC prompt) on every launch
+    /// if it isn't already running as administrator — so highest-privileges tasks and protected
+    /// system tasks can be managed without choosing "Restart as administrator" each time.</summary>
+    public static bool AlwaysRunAsAdmin
+    {
+        get => Local.Values[AlwaysRunAsAdminKey] is bool b ? b : false;
+        set => Local.Values[AlwaysRunAsAdminKey] = value;
     }
 
     public static BackdropChoice Backdrop

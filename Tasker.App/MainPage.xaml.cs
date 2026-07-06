@@ -1,6 +1,8 @@
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Navigation;
+using System.Linq;
 using Tasker_App.Views;
 using Windows.Graphics;
 
@@ -34,6 +36,29 @@ public sealed partial class MainPage : Page
 
         Services.WidgetMode.Changed += OnWidgetModeChanged;
         Services.AppSettings.AiEnabledChanged += OnAiEnabledChanged;
+        // Keep the nav selection in sync when pages navigate programmatically (e.g. the Designer
+        // returning to Tasks after a save, or "Open in designer" from the task list).
+        ContentFrame.Navigated += OnContentFrameNavigated;
+    }
+
+    private void OnContentFrameNavigated(object sender, NavigationEventArgs e)
+    {
+        var tag = e.SourcePageType.Name switch
+        {
+            nameof(QuickLaunchPage) => "QuickLaunch",
+            nameof(RunningPage) => "Running",
+            nameof(UpcomingPage) => "Upcoming",
+            nameof(AssistantPage) => "Assistant",
+            nameof(AboutPage) => "Settings",
+            nameof(DesignerPage) => "Designer",
+            nameof(LibraryPage) => "Library",
+            _ => "Tasks",
+        };
+        var match = NavView.MenuItems.Concat(NavView.FooterMenuItems)
+            .OfType<NavigationViewItem>()
+            .FirstOrDefault(i => (i.Tag as string) == tag);
+        if (match is not null && !ReferenceEquals(NavView.SelectedItem, match))
+            NavView.SelectedItem = match;
     }
 
     private (Type page, NavigationViewItem item) ResolveStartPage()
@@ -55,6 +80,13 @@ public sealed partial class MainPage : Page
 
     private void OnAiEnabledChanged(bool enabled)
     {
+        // AppSettings is thread-agnostic static state; marshal to the UI thread before touching
+        // any UI element (a cross-thread access throws COMException in WinUI 3).
+        if (!DispatcherQueue.HasThreadAccess)
+        {
+            DispatcherQueue.TryEnqueue(() => OnAiEnabledChanged(enabled));
+            return;
+        }
         ApplyAiVisibility(enabled);
         // If AI was turned off while on the Assistant page, fall back to Tasks.
         if (!enabled && ContentFrame.CurrentSourcePageType == typeof(AssistantPage))
@@ -70,6 +102,8 @@ public sealed partial class MainPage : Page
         var page = (item.Tag as string) switch
         {
             "QuickLaunch" => typeof(QuickLaunchPage),
+            "Designer" => typeof(DesignerPage),
+            "Library" => typeof(LibraryPage),
             "Running" => typeof(RunningPage),
             "Upcoming" => typeof(UpcomingPage),
             "Assistant" => typeof(AssistantPage),
@@ -112,6 +146,12 @@ public sealed partial class MainPage : Page
     /// on top so just the pinned task buttons remain.</summary>
     private void OnWidgetModeChanged(bool active)
     {
+        // WidgetMode is thread-agnostic static state; marshal to the UI thread before touching UI.
+        if (!DispatcherQueue.HasThreadAccess)
+        {
+            DispatcherQueue.TryEnqueue(() => OnWidgetModeChanged(active));
+            return;
+        }
         NavView.IsPaneVisible = !active;
 
         var window = App.Window;

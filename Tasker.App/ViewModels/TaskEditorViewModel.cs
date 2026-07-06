@@ -17,6 +17,10 @@ public partial class TaskEditorViewModel : ObservableObject
     public string Title => IsEditMode ? "Edit task" : "Create task";
     private readonly string? _originalPath;
 
+    /// <summary>When editing, the task's original path. If the user changes the name or folder the
+    /// save is a move: the caller registers the task at its new path and deletes this original.</summary>
+    public string? OriginalPath => _originalPath;
+
     public ObservableCollection<TriggerEditViewModel> Triggers { get; } = new();
     public ObservableCollection<ActionEditViewModel> Actions { get; } = new();
 
@@ -50,7 +54,7 @@ public partial class TaskEditorViewModel : ObservableObject
     {
         new NamedValue("Run only when the user is logged on", "InteractiveToken"),
         new NamedValue("Run whether the user is logged on or not (store password)", "Password"),
-        new NamedValue("Run whether logged on or not \u2014 don't store password (S4U)", "S4U"),
+        new NamedValue("Run whether logged on or not, don't store password (S4U)", "S4U"),
         new NamedValue("Run as SYSTEM (no password)", "ServiceAccount"),
     };
 
@@ -122,6 +126,30 @@ public partial class TaskEditorViewModel : ObservableObject
 
     [ObservableProperty]
     public partial string ValidationMessage { get; set; } = string.Empty;
+
+    /// <summary>Live, plain-language recap of the active run conditions, shown on the designer's
+    /// "Only run if" card. Recomputed on any property change.</summary>
+    public string ConditionsSummary
+    {
+        get
+        {
+            var parts = new List<string>();
+            if (DisallowStartIfOnBatteries) parts.Add("only on AC power");
+            if (RunOnlyIfNetworkAvailable) parts.Add("only with a network connection");
+            if (RunOnlyIfIdle) parts.Add("only when the PC is idle");
+            if (StartWhenAvailable) parts.Add("catching up missed runs");
+            if (WakeToRun) parts.Add("waking the PC if asleep");
+            if (RestartOnFailure) parts.Add("retrying if it fails");
+            return parts.Count == 0 ? "Runs under any conditions" : "Runs " + string.Join(", ", parts);
+        }
+    }
+
+    protected override void OnPropertyChanged(System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        base.OnPropertyChanged(e);
+        if (e.PropertyName != nameof(ConditionsSummary))
+            OnPropertyChanged(nameof(ConditionsSummary));
+    }
 
     public TaskEditorViewModel(TaskDetailDto? existing = null, bool asDuplicate = false)
     {
@@ -229,6 +257,32 @@ public partial class TaskEditorViewModel : ObservableObject
             return null;
         }
 
+        // Validate schedule triggers so a half-filled trigger can't silently fall back to a much
+        // broader schedule in the engine (e.g. weekly with no days becomes "every day").
+        foreach (var t in Triggers)
+        {
+            if (t.Kind is TriggerKind.Weekly or TriggerKind.MonthlyDOW && !t.AnyWeekdaySelected)
+            {
+                ValidationMessage = "Select at least one day of the week for the weekly / monthly-by-weekday trigger.";
+                return null;
+            }
+            if (t.Kind == TriggerKind.MonthlyDOW && !t.AnyWeekSelected)
+            {
+                ValidationMessage = "Select at least one week (first, second, \u2026 or last) for the monthly-by-weekday trigger.";
+                return null;
+            }
+            if (t.Kind == TriggerKind.Monthly && !t.AnyMonthDaySelected)
+            {
+                ValidationMessage = "Enter at least one day of the month (1\u201331), or choose the last day, for the monthly trigger.";
+                return null;
+            }
+            if (t.Kind is TriggerKind.Monthly or TriggerKind.MonthlyDOW && !t.AnyMonthSelected)
+            {
+                ValidationMessage = "Select at least one month for the monthly trigger.";
+                return null;
+            }
+        }
+
         var logon = SelectedLogon?.Value ?? "InteractiveToken";
         req.Principal = new PrincipalDto
         {
@@ -237,7 +291,10 @@ public partial class TaskEditorViewModel : ObservableObject
         };
         if (logon == "ServiceAccount")
         {
-            req.Principal.UserId = string.IsNullOrWhiteSpace(RunAsUser) ? "SYSTEM" : RunAsUser.Trim();
+            // The UI presents this option as "Run as SYSTEM". Honor an explicitly-typed built-in
+            // service account, but never register a normal user account (e.g. the pre-filled current
+            // user) under ServiceAccount logon — fall back to SYSTEM so the task is valid.
+            req.Principal.UserId = ResolveServiceAccount(RunAsUser);
         }
         else
         {
@@ -272,5 +329,17 @@ public partial class TaskEditorViewModel : ObservableObject
         req.Triggers = Triggers.Select(t => t.ToDto()).ToList();
         req.Actions = actions;
         return req;
+    }
+
+    /// <summary>Maps the "Run as user" text to a valid built-in service account for ServiceAccount
+    /// logon. Recognized system accounts are honored; anything else (including the pre-filled current
+    /// user) falls back to SYSTEM, which is what the "Run as SYSTEM" option promises.</summary>
+    private static string ResolveServiceAccount(string? user)
+    {
+        var u = user?.Trim() ?? string.Empty;
+        if (u.Length == 0) return "SYSTEM";
+        string[] known = { "SYSTEM", "LOCALSYSTEM", "LOCAL SERVICE", "NETWORK SERVICE" };
+        var leaf = u.Contains('\\') ? u[(u.LastIndexOf('\\') + 1)..] : u;
+        return known.Any(k => leaf.Equals(k, StringComparison.OrdinalIgnoreCase)) ? leaf : "SYSTEM";
     }
 }

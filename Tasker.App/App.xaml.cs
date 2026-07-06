@@ -50,9 +50,25 @@ public partial class App : Application
     /// <param name="args">Details about the launch request and process.</param>
     protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
+        // Honor the "Always run as administrator" preference: if it's on and we aren't already
+        // elevated, relaunch elevated (UAC) and let this unelevated instance exit. The elevated
+        // relaunch is elevated, so it won't re-trigger this. If the user declines the UAC prompt
+        // (RelaunchAsAdmin returns false) we fall through and run normally, unelevated.
+        if (Services.AppSettings.AlwaysRunAsAdmin
+            && !Helpers.Elevation.IsElevated
+            && Helpers.Elevation.RelaunchAsAdmin())
+        {
+            Exit();
+            return;
+        }
+
         Window = new MainWindow();
         DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
         Tasker_App.Services.TaskWatcher.EnsureRegistered();
+        // Best-effort: keeps the staged copy of the bundled MCP server (see
+        // CopilotAssistant.EnsureStagedMcpServer) current so external tools can find it without
+        // waiting for the user to open Settings first.
+        Services.CopilotAssistant.WarmMcpServerStaging();
         Window.Activate();
     }
 }

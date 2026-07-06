@@ -57,19 +57,30 @@ public sealed partial class QuickLaunchPage : Page
     private void CopyPath_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is not TaskSummaryDto task) return;
-        var data = new DataPackage();
-        data.SetText(task.Path);
-        Clipboard.SetContent(data);
-        ViewModel.ShowStatus("Copied task path to clipboard.", isError: false);
+        var ok = Helpers.Clip.TrySetText(task.Path);
+        ViewModel.ShowStatus(ok ? "Copied task path to clipboard." : "Couldn't access the clipboard. Try again.", isError: !ok);
     }
 
     private async void Add_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new QuickLaunchPickerDialog(AppSettings.QuickLaunch) { XamlRoot = XamlRoot };
+        var page = new QuickLaunchPickerDialogPage(AppSettings.QuickLaunch);
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = "Add to Quick Launch",
+            PrimaryButtonText = "Save",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Primary,
+            Content = page,
+        };
+        dialog.Resources["ContentDialogMaxWidth"] = 720d;
+        dialog.Resources["ContentDialogMaxHeight"] = 760d;
+        dialog.PrimaryButtonClick += page.OnSave;
+
         if (await dialog.ShowAsync() == ContentDialogResult.Primary)
         {
-            await ViewModel.ApplyPinnedAsync(dialog.SelectedPaths);
-            ViewModel.ShowStatus($"Quick Launch updated ({dialog.SelectedPaths.Count} pinned).", isError: false);
+            await ViewModel.ApplyPinnedAsync(page.SelectedPaths);
+            ViewModel.ShowStatus($"Quick Launch updated ({page.SelectedPaths.Count} pinned).", isError: false);
         }
     }
 

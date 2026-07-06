@@ -47,6 +47,15 @@ public sealed partial class TasksPage : Page
             await ViewModel.InitializeAsync();
     }
 
+    protected override void OnNavigatedFrom(NavigationEventArgs e)
+    {
+        base.OnNavigatedFrom(e);
+        // A new page + VM is created on every navigation to Tasks; release the static event
+        // subscription (and our own) so the old instances don't leak or fire redundant refreshes.
+        ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        ViewModel.Cleanup();
+    }
+
     private void FolderTree_ItemInvoked(TreeView sender, TreeViewItemInvokedEventArgs args)
     {
         if (args.InvokedItem is FolderNode node)
@@ -137,6 +146,61 @@ public sealed partial class TasksPage : Page
         await ShowEditorAsync(new TaskEditorViewModel(ViewModel.Detail, asDuplicate: true), ViewModel.Detail.Folder);
     }
 
+    private async void Move_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel.Detail is null) return;
+        var path = ViewModel.Detail.Path;
+
+        var page = new Dialogs.MoveToFolderDialogPage(1, ViewModel.Detail.Folder);
+        if (!await ShowMoveDialogAsync(page)) return;
+
+        var result = await ViewModel.MoveTaskAsync(path, page.DestinationFolder);
+        if (result.Success)
+        {
+            ViewModel.ShowInfo(result.Message);
+            ViewModel.SelectedTask = null;
+            await ViewModel.RefreshAsync();
+        }
+        else
+        {
+            ViewModel.ShowError(result.Message);
+        }
+    }
+
+    private async void BulkMove_Click(object sender, RoutedEventArgs e)
+    {
+        var paths = ViewModel.SelectedPaths.ToList();
+        if (paths.Count == 0) return;
+
+        var page = new Dialogs.MoveToFolderDialogPage(paths.Count, ViewModel.SelectedFolder?.Path ?? "\\");
+        if (!await ShowMoveDialogAsync(page)) return;
+
+        await ViewModel.BulkAsync(p => ViewModel.MoveTaskAsync(p, page.DestinationFolder), "Moved", paths);
+    }
+
+    /// <summary>Shows the destination-folder picker for a move and reports whether the user
+    /// confirmed it (<see cref="Dialogs.MoveToFolderDialogPage.Moved"/>). The caller performs the
+    /// actual move(s) afterwards, since single vs. bulk moves report progress differently.</summary>
+    private async Task<bool> ShowMoveDialogAsync(Dialogs.MoveToFolderDialogPage page)
+    {
+        try { page.SetFolders(await Services.TaskerClient.GetFolderPathsAsync()); }
+        catch { /* folder suggestions are best-effort */ }
+
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = "Move to folder",
+            PrimaryButtonText = "Move",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Primary,
+            Content = page,
+        };
+        dialog.PrimaryButtonClick += page.OnMove;
+
+        await dialog.ShowAsync();
+        return page.Moved;
+    }
+
     private async void Template_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not FrameworkElement fe || fe.Tag is not string tagStr || !int.TryParse(tagStr, out var idx)) return;
@@ -145,16 +209,42 @@ public sealed partial class TasksPage : Page
         await ShowEditorAsync(vm, ViewModel.SelectedFolder?.Path);
     }
 
+    private void DesignVisually_Click(object sender, RoutedEventArgs e)
+    {
+        var folder = ViewModel.SelectedFolder?.Path ?? "\\";
+        Frame.Navigate(typeof(DesignerPage), new DesignerNavArgs { DefaultFolder = folder });
+    }
+
+    private void EditInDesigner_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel.Detail is null) return;
+        Frame.Navigate(typeof(DesignerPage), new DesignerNavArgs { Existing = ViewModel.Detail });
+    }
+
     private async void GuidedSetup_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new Dialogs.WizardDialog(ViewModel.SelectedFolder?.Path) { XamlRoot = XamlRoot };
-        try { dialog.SetFolders(await Services.TaskerClient.GetFolderPathsAsync()); }
+        var page = new Dialogs.WizardDialogPage(ViewModel.SelectedFolder?.Path);
+        try { page.SetFolders(await Services.TaskerClient.GetFolderPathsAsync()); }
         catch { /* folder suggestions are best-effort */ }
 
-        await dialog.ShowAsync();
-        if (dialog.Created)
+        var dialog = new ContentDialog
         {
-            ViewModel.ShowInfo(dialog.LastResult?.Message ?? "Task created.");
+            XamlRoot = XamlRoot,
+            Title = "Guided setup",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Primary,
+            Content = page,
+        };
+        dialog.Resources["ContentDialogMaxWidth"] = 900d;
+        dialog.Resources["ContentDialogMaxHeight"] = 760d;
+        dialog.PrimaryButtonClick += page.OnPrimary;
+        dialog.SecondaryButtonClick += page.OnSecondary;
+        page.Attach(dialog);
+
+        await dialog.ShowAsync();
+        if (page.Created)
+        {
+            ViewModel.ShowInfo(page.LastResult?.Message ?? "Task created.");
             await ViewModel.RefreshAsync();
         }
     }
@@ -229,11 +319,24 @@ public sealed partial class TasksPage : Page
         try { editorVm.SetFolders(await Services.TaskerClient.GetFolderPathsAsync()); }
         catch { /* folder suggestions are best-effort */ }
 
-        var dialog = new TaskEditorDialog(editorVm) { XamlRoot = XamlRoot };
-        await dialog.ShowAsync();
-        if (dialog.Saved)
+        var page = new TaskEditorDialogPage(editorVm);
+        var dialog = new ContentDialog
         {
-            ViewModel.ShowInfo(dialog.LastResult?.Message ?? "Saved.");
+            XamlRoot = XamlRoot,
+            Title = editorVm.Title,
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Primary,
+            PrimaryButtonText = "Save",
+            Content = page,
+        };
+        dialog.Resources["ContentDialogMaxWidth"] = 860d;
+        dialog.Resources["ContentDialogMaxHeight"] = 1600d;
+        dialog.PrimaryButtonClick += page.OnSave;
+
+        await dialog.ShowAsync();
+        if (page.Saved)
+        {
+            ViewModel.ShowInfo(page.LastResult?.Message ?? "Saved.");
             await ViewModel.RefreshAsync();
         }
     }
@@ -338,7 +441,9 @@ public sealed partial class TasksPage : Page
         var name = Path.GetFileNameWithoutExtension(file.Name);
         var folder = ViewModel.SelectedFolder?.Path ?? "\\";
 
-        var result = await Services.TaskerClient.ImportXmlAsync(folder, name, xml);
+        // Importing an external .xml is bringing in a pre-existing definition, so preserve its
+        // original <Source> (don't stamp it as created by Windows Task Studio), matching restore.
+        var result = await Services.TaskerClient.ImportXmlAsync(folder, name, xml, stampSource: false);
         if (result.Success)
         {
             ViewModel.ShowInfo(result.Message);
@@ -378,10 +483,10 @@ public sealed partial class TasksPage : Page
     private void CopyXml_Click(object sender, RoutedEventArgs e)
     {
         if (ViewModel.Detail is null) return;
-        var data = new DataPackage();
-        data.SetText(ViewModel.Detail.Xml);
-        Clipboard.SetContent(data);
-        ViewModel.ShowInfo("Task XML copied to clipboard.");
+        if (Helpers.Clip.TrySetText(ViewModel.Detail.Xml))
+            ViewModel.ShowInfo("Task XML copied to clipboard.");
+        else
+            ViewModel.ShowError("Couldn't access the clipboard. Try again.");
     }
 
     private async void History_Expanding(Expander sender, ExpanderExpandingEventArgs args)

@@ -42,7 +42,7 @@
                     Grid.Column="1"
                     AutomationProperties.AutomationId="QuickLaunchMinimalButton"
                     Click="ToggleWidget_Click"
-                    ToolTipService.ToolTip="Minimal view &#x2014; a floating, always-on-top widget">
+                    ToolTipService.ToolTip="Minimal view: a floating, always-on-top widget">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="14" Glyph="&#xE944;" />
                         <TextBlock Text="Minimal view" />
@@ -51,6 +51,7 @@
                 <Button
                     Grid.Column="2"
                     AutomationProperties.AutomationId="QuickLaunchRefreshButton"
+                    AutomationProperties.Name="Refresh"
                     Command="{x:Bind ViewModel.RefreshCommand}"
                     ToolTipService.ToolTip="Refresh">
                     <FontIcon FontSize="14" Glyph="&#xE72C;" />
@@ -155,6 +156,7 @@
                                         Padding="0"
                                         VerticalAlignment="Top"
                                         AutomationProperties.AutomationId="QuickLaunchUnpinButton"
+                                        AutomationProperties.Name="Remove from Quick Launch"
                                         Background="Transparent"
                                         BorderThickness="0"
                                         Click="Unpin_Click"
@@ -178,7 +180,8 @@
                                         TextTrimming="CharacterEllipsis"
                                         TextWrapping="NoWrap" />
                                     <TextBlock
-                                        Text="{x:Bind Folder}"
+                                        Text="{x:Bind helpers:Format.FolderLabel(Folder)}"
+                                        Visibility="{x:Bind helpers:Format.FolderVisibility(Folder)}"
                                         ToolTipService.ToolTip="{x:Bind Folder}"
                                         Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                         MaxLines="1"
@@ -342,6 +345,7 @@
                                         HorizontalAlignment="Stretch"
                                         HorizontalContentAlignment="Left"
                                         Click="Run_Click"
+                                        AutomationProperties.Name="{x:Bind Name}"
                                         ToolTipService.ToolTip="{x:Bind helpers:Format.LastRunSummary(LastRunTime, LastResultText)}">
                                         <Grid ColumnSpacing="10">
                                             <Grid.ColumnDefinitions>

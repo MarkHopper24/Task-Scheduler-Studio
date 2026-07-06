@@ -16,7 +16,7 @@
   <mp:PhoneIdentity PhoneProductId="0FFB5D38-E958-44ED-A4EF-43D4577695AD" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>Windows Tasker</DisplayName>
+    <DisplayName>Windows Task Studio</DisplayName>
     <PublisherDisplayName>Mark Hopper</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
@@ -35,8 +35,8 @@
       Executable="$targetnametoken$.exe"
       EntryPoint="$targetentrypoint$">
       <uap:VisualElements
-        DisplayName="Windows Tasker"
-        Description="A modern replacement for Windows Task Scheduler"
+        DisplayName="Windows Task Studio"
+        Description="A modern take on Windows Task Scheduler"
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png">
@@ -46,13 +46,13 @@
       <Extensions>
         <uap5:Extension Category="windows.startupTask">
           <uap5:StartupTask
-            TaskId="WindowsTaskerStartup"
+            TaskId="WinTaskSchedulerStartup"
             Enabled="false"
-            DisplayName="Windows Tasker" />
+            DisplayName="Windows Task Studio" />
         </uap5:Extension>
         <!--
           Expose the bundled MCP server under a stable app-execution alias. External MCP clients
-          (Copilot CLI, VS Code, Claude Code) launch "WindowsTaskerMcp.exe", which Windows resolves
+          (Copilot CLI, VS Code, Claude Code) launch "WinTaskSchedulerMcp.exe", which Windows resolves
           from %LOCALAPPDATA%\Microsoft\WindowsApps (on PATH) to the installed server regardless of
           install location or version. The alias' Executable points at the bundled server, so this
           stays a single, normal (non-headless) app — no extra Start-menu entry, no headless waiver.
@@ -62,7 +62,7 @@
           Executable="mcp\Tasker.Mcp.exe"
           EntryPoint="Windows.FullTrustApplication">
           <uap5:AppExecutionAlias>
-            <uap5:ExecutionAlias Alias="WindowsTaskerMcp.exe" />
+            <uap5:ExecutionAlias Alias="WinTaskSchedulerMcp.exe" />
           </uap5:AppExecutionAlias>
         </uap5:Extension>
       </Extensions>

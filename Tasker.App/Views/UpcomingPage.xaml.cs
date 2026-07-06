@@ -51,9 +51,8 @@ public sealed partial class UpcomingPage : Page
     {
         var path = ViewModel.SelectedTask?.Path;
         if (string.IsNullOrEmpty(path)) return;
-        var data = new DataPackage();
-        data.SetText(path);
-        Clipboard.SetContent(data);
-        ViewModel.StatusMessage = "Copied task path to clipboard.";
+        ViewModel.StatusMessage = Helpers.Clip.TrySetText(path)
+            ? "Copied task path to clipboard."
+            : "Couldn't access the clipboard. Try again.";
     }
 }

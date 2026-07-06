@@ -68,7 +68,7 @@ public static class TaskWatcher
             EnsureRegistered();
             var toast = new AppNotificationBuilder()
                 .AddText("Scheduled task finished")
-                .AddText($"{name} \u2014 {result}")
+                .AddText($"{name}: {result}")
                 .BuildNotification();
             AppNotificationManager.Default.Show(toast);
         }

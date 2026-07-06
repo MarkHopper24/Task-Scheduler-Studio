@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="Tasker_App.Dialogs.TaskEditorDialogPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:controls="using:Tasker_App.Controls"
+    xmlns:helpers="using:Tasker_App.Helpers"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:Tasker_App.ViewModels"
+    mc:Ignorable="d">
+
+    <Grid x:Name="RootGrid" Width="760" Height="600" MinHeight="420" RowSpacing="12" Loaded="RootGrid_Loaded">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <SelectorBar x:Name="SectionBar" Grid.Row="0" SelectionChanged="SectionBar_SelectionChanged">
+            <SelectorBarItem x:Name="TabGeneral" AutomationProperties.AutomationId="TabGeneral" Text="General" IsSelected="True" />
+            <SelectorBarItem x:Name="TabTriggers" AutomationProperties.AutomationId="TabTriggers" Text="Triggers" />
+            <SelectorBarItem x:Name="TabActions" AutomationProperties.AutomationId="TabActions" Text="Actions" />
+            <SelectorBarItem x:Name="TabConditions" AutomationProperties.AutomationId="TabConditions" Text="Conditions" />
+            <SelectorBarItem x:Name="TabAdvanced" AutomationProperties.AutomationId="TabAdvanced" Text="Advanced" />
+        </SelectorBar>
+
+        <InfoBar
+            Grid.Row="1"
+            IsClosable="False"
+            IsOpen="{x:Bind helpers:Format.IsNotEmpty(ViewModel.ValidationMessage), Mode=OneWay}"
+            Message="{x:Bind ViewModel.ValidationMessage, Mode=OneWay}"
+            Severity="Warning" />
+
+        <Grid Grid.Row="2">
+
+            <!--  General  -->
+            <ScrollViewer x:Name="GeneralPanel">
+                <StackPanel Spacing="12">
+                    <TextBox
+                        AutomationProperties.AutomationId="EditorName"
+                        Header="Name"
+                        PlaceholderText="My task"
+                        Text="{x:Bind ViewModel.TaskName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <ComboBox
+                        AutomationProperties.AutomationId="EditorFolder"
+                        Header="Folder"
+                        HorizontalAlignment="Stretch"
+                        IsEditable="True"
+                        ItemsSource="{x:Bind ViewModel.AvailableFolders}"
+                        PlaceholderText="\"
+                        Text="{x:Bind ViewModel.Folder, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBox
+                        AutomationProperties.AutomationId="EditorAuthor"
+                        Header="Author"
+                        Text="{x:Bind ViewModel.Author, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBox
+                        AutomationProperties.AutomationId="EditorDescription"
+                        Header="Description"
+                        AcceptsReturn="True"
+                        Height="80"
+                        TextWrapping="Wrap"
+                        Text="{x:Bind ViewModel.Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <ToggleSwitch
+                        AutomationProperties.AutomationId="EditorEnabled"
+                        Header="Enabled"
+                        IsOn="{x:Bind ViewModel.TaskEnabled, Mode=TwoWay}" />
+                    <ToggleSwitch
+                        AutomationProperties.AutomationId="EditorHighest"
+                        Header="Run with highest privileges (requires admin)"
+                        IsOn="{x:Bind ViewModel.RunWithHighestPrivileges, Mode=TwoWay}" />
+                    <ToggleSwitch
+                        AutomationProperties.AutomationId="EditorHidden"
+                        Header="Hidden"
+                        IsOn="{x:Bind ViewModel.Hidden, Mode=TwoWay}" />
+
+                    <TextBlock Margin="0,4,0,0" Text="Security options" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                    <TextBox
+                        AutomationProperties.AutomationId="EditorRunAsUser"
+                        Header="Run as user"
+                        Text="{x:Bind ViewModel.RunAsUser, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <ComboBox
+                        AutomationProperties.AutomationId="EditorLogon"
+                        Header="When to run"
+                        HorizontalAlignment="Stretch"
+                        DisplayMemberPath="Label"
+                        ItemsSource="{x:Bind ViewModel.LogonOptions}"
+                        SelectedItem="{x:Bind ViewModel.SelectedLogon, Mode=TwoWay}" />
+                    <PasswordBox
+                        x:Name="EditorPasswordBox"
+                        AutomationProperties.AutomationId="EditorPassword"
+                        Header="Account password"
+                        Visibility="{x:Bind helpers:Format.BoolToVisibility(ViewModel.ShowRunAsPassword), Mode=OneWay}" />
+                </StackPanel>
+            </ScrollViewer>
+
+            <!--  Triggers  -->
+            <ScrollViewer x:Name="TriggersPanel" Visibility="Collapsed">
+                <StackPanel Spacing="12">
+                    <Button AutomationProperties.AutomationId="AddTriggerButton" Command="{x:Bind ViewModel.AddTriggerCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon FontSize="14" Glyph="&#xE710;" />
+                            <TextBlock Text="Add trigger" />
+                        </StackPanel>
+                    </Button>
+                    <ItemsControl ItemsSource="{x:Bind ViewModel.Triggers}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:TriggerEditViewModel">
+                                <Border
+                                    Margin="0,0,0,8"
+                                    Padding="14"
+                                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="8">
+                                    <controls:TriggerEditorControl
+                                        ViewModel="{x:Bind}"
+                                        ShowRemoveButton="True"
+                                        RemoveRequested="TriggerCard_RemoveRequested" />
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!--  Actions  -->
+            <ScrollViewer x:Name="ActionsPanel" Visibility="Collapsed">
+                <StackPanel Spacing="12">
+                    <Button AutomationProperties.AutomationId="AddActionButton" Command="{x:Bind ViewModel.AddActionCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon FontSize="14" Glyph="&#xE710;" />
+                            <TextBlock Text="Add action" />
+                        </StackPanel>
+                    </Button>
+                    <ItemsControl ItemsSource="{x:Bind ViewModel.Actions}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ActionEditViewModel">
+                                <Border
+                                    Margin="0,0,0,8"
+                                    Padding="14"
+                                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="8">
+                                    <controls:ActionEditorControl
+                                        ViewModel="{x:Bind}"
+                                        ShowRemoveButton="True"
+                                        RemoveRequested="ActionCard_RemoveRequested" />
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!--  Conditions  -->
+            <ScrollViewer x:Name="ConditionsPanel" Visibility="Collapsed">
+                <StackPanel Spacing="10">
+                    <ToggleSwitch Header="Allow task to be run on demand" IsOn="{x:Bind ViewModel.AllowDemandStart, Mode=TwoWay}" />
+                    <ToggleSwitch Header="Run as soon as possible after a missed start" IsOn="{x:Bind ViewModel.StartWhenAvailable, Mode=TwoWay}" />
+                    <ToggleSwitch Header="Start only if a network connection is available" IsOn="{x:Bind ViewModel.RunOnlyIfNetworkAvailable, Mode=TwoWay}" />
+                    <ToggleSwitch Header="Start only if the computer is on AC power" IsOn="{x:Bind ViewModel.DisallowStartIfOnBatteries, Mode=TwoWay}" />
+                    <ToggleSwitch Header="Stop if the computer switches to battery power" IsOn="{x:Bind ViewModel.StopIfGoingOnBatteries, Mode=TwoWay}" />
+                    <ToggleSwitch Header="Wake the computer to run this task" IsOn="{x:Bind ViewModel.WakeToRun, Mode=TwoWay}" />
+                    <ToggleSwitch Header="Start only if the computer is idle" IsOn="{x:Bind ViewModel.RunOnlyIfIdle, Mode=TwoWay}" />
+                    <ToggleSwitch Header="Restart the task if it fails" IsOn="{x:Bind ViewModel.RestartOnFailure, Mode=TwoWay}" />
+                    <NumberBox
+                        Header="Number of restart attempts"
+                        Minimum="0"
+                        SpinButtonPlacementMode="Inline"
+                        Value="{x:Bind ViewModel.RestartCount, Mode=TwoWay}" />
+                    <ComboBox
+                        Header="Stop the task if it runs longer than"
+                        DisplayMemberPath="Label"
+                        HorizontalAlignment="Stretch"
+                        ItemsSource="{x:Bind ViewModel.TimeLimitOptions}"
+                        SelectedItem="{x:Bind ViewModel.SelectedTimeLimit, Mode=TwoWay}" />
+                    <ComboBox
+                        Header="If the task is already running, then the following rule applies"
+                        DisplayMemberPath="Label"
+                        HorizontalAlignment="Stretch"
+                        ItemsSource="{x:Bind ViewModel.InstancesOptions}"
+                        SelectedItem="{x:Bind ViewModel.SelectedInstances, Mode=TwoWay}" />
+                </StackPanel>
+            </ScrollViewer>
+
+            <!--  Advanced (raw XML)  -->
+            <ScrollViewer x:Name="AdvancedPanel" Visibility="Collapsed">
+                <StackPanel Spacing="12">
+                    <ToggleSwitch
+                        AutomationProperties.AutomationId="EditorUseRawXml"
+                        Header="Use raw XML instead of the fields above"
+                        IsOn="{x:Bind ViewModel.UseRawXml, Mode=TwoWay}" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        TextWrapping="Wrap"
+                        Text="Paste or edit a full Task Scheduler task definition. When the switch above is on, this XML is registered verbatim, giving full fidelity for trigger or action types the form does not cover." />
+                    <TextBox
+                        AutomationProperties.AutomationId="EditorXml"
+                        AcceptsReturn="True"
+                        FontFamily="Consolas"
+                        Height="420"
+                        IsSpellCheckEnabled="False"
+                        Text="{x:Bind ViewModel.Xml, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        TextWrapping="NoWrap"
+                        ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                        ScrollViewer.VerticalScrollBarVisibility="Auto" />
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</Page>

@@ -1,11 +1,11 @@
-# Windows Tasker
+# Windows Task Studio
 
 A beautiful, Fluent **WinUI 3** replacement for the Windows Task Scheduler, plus a local **MCP
 server** so AI agents can manage scheduled tasks. Both share one engine and write to the **live
 Windows Task Scheduler store**, so every task is fully interoperable with the built‑in Task
 Scheduler — create a task in either tool and it appears, runs, and edits identically in the other.
 
-> **Disclaimer:** Windows Tasker was created by a Microsoft employee as an individual personal
+> **Disclaimer:** Windows Task Studio was created by a Microsoft employee as an individual personal
 > project and proof of concept. It is **not** an official Microsoft product, service, or offering,
 > and it is **not affiliated with, endorsed by, or supported by Microsoft**. All work and opinions
 > are the developer's own.
@@ -14,9 +14,9 @@ Scheduler — create a task in either tool and it appears, runs, and edits ident
 
 ## Why it's cross‑compatible
 
-Windows Tasker talks to the **Task Scheduler V2 COM API** (`Schedule.Service`) through the mature
+Windows Task Studio talks to the **Task Scheduler V2 COM API** (`Schedule.Service`) through the mature
 `Microsoft.Win32.TaskScheduler` managed wrapper. That is the *same* API and the *same* task store
-the built‑in Task Scheduler uses — there is no separate database. Anything Windows Tasker creates is
+the built‑in Task Scheduler uses — there is no separate database. Anything Windows Task Studio creates is
 a normal scheduled task: visible in `taskschd.msc`, queryable with `schtasks`, and backed by the
 standard Task Scheduler XML interchange format (Import/Export compatible).
 
@@ -30,12 +30,32 @@ standard Task Scheduler XML interchange format (Import/Export compatible).
 
 Because the UI and the MCP server both call into `Tasker.Core`, they always behave identically.
 
+## Script library
+
+The **Library** page offers ~20 ready-made, safe PowerShell automation scripts (cleanup, backup,
+maintenance, monitoring, and system tasks) plus your own saved scripts. Each built-in script opens with
+a clearly-commented **settings block** for easy tweaks, exposed as friendly inputs in the preview. When
+you pick **Create task**, the (possibly edited) script is written to a real `.ps1` under
+`%LOCALAPPDATA%\WindowsTasker\scripts` and handed to the visual **Designer** as a pre-built action, so
+you just choose a schedule. You can also add a script mid-flow from the Designer's **Add action →
+From script library**.
+
+- **Safe by design:** deletions of your files go to the Recycle Bin; only transient caches/temp are
+  hard-deleted (scoped, best-effort). Every script runs `-NoProfile -ExecutionPolicy Bypass` and is
+  shown for review before a task is created. Scripts that need elevation are flagged and switch on
+  "Run with highest privileges".
+- **Notifications:** the reminder and low-disk-space scripts raise real **Windows 11 toasts** without
+  installing a module or registering an app (they borrow Windows Task Studio's own AUMID, falling back
+  to File Explorer's).
+- **Your own scripts:** create, edit, duplicate (from a built-in), and delete your scripts; they are
+  stored as JSON at `%LOCALAPPDATA%\WindowsTasker\script-library.json`.
+
 ## Create tasks with natural language (GitHub Copilot SDK)
 
 The **Assistant** page embeds the official [GitHub Copilot SDK](https://github.com/github/copilot-sdk)
 (`GitHub.Copilot.SDK`). Describe what you want in plain English — *"run backup.cmd every weekday at
 6pm"* — and the Copilot agent runs a guided flow: it asks for anything that's missing (name, the
-program to run, the schedule), confirms, then calls the Windows Tasker tools (`create_task`,
+program to run, the schedule), confirms, then calls the Windows Task Studio tools (`create_task`,
 `create_task_from_xml`, `list_folders`, `list_tasks`) — the **same tools the MCP server exposes**,
 backed by the shared engine — to write the task into the live Windows store.
 
@@ -45,7 +65,7 @@ backed by the shared engine — to write the task into the live Windows store.
   existing Copilot session. A Copilot subscription is required.
 - **Locked down:** the assistant is hardened on multiple layers — a dedicated **AGENTS.md** and
   system prompt restrict it to scheduled-task work, and a strict **permission handler** allows ONLY
-  the Windows Tasker task tools to execute, rejecting shell, file, web, memory and every other
+  the Windows Task Studio task tools to execute, rejecting shell, file, web, memory and every other
   built-in capability (verified: a jailbreak prompt asking it to run a shell command was refused and
   nothing happened). Tool inputs are validated, and destructive actions require confirmation.
 - **Suggested prompts:** quick chips like *Scan tasks for red flags* (runs `analyze_task` over your
@@ -58,7 +78,7 @@ Prerequisites: Windows 10 1903+, .NET 10 SDK, Developer Mode, and the `winapp` C
 
 ```powershell
 # Build everything
-dotnet build WindowsTasker.slnx -c Debug
+dotnet build WinTaskScheduler.slnx -c Debug
 
 # Run the desktop app (uses the WinUI dev workflow helper)
 cd Tasker.App
@@ -66,7 +86,7 @@ cd Tasker.App
 ```
 
 > **Elevation:** Creating tasks that *Run with highest privileges*, or editing protected system
-> tasks under `\Microsoft\Windows\…`, requires running Windows Tasker (or the MCP server) **as
+> tasks under `\Microsoft\Windows\…`, requires running Windows Task Studio (or the MCP server) **as
 > administrator** — exactly like the built‑in tool. Everyday per‑user tasks work without elevation.
 
 ## The MCP server
@@ -91,12 +111,12 @@ cd Tasker.App
 ### Register it with an MCP client
 
 **Easiest:** open the app's **About** page and click **Install for Copilot CLI** or **Install for
-VS Code** — each merges a `windows-tasker` entry into the right config file (preserving anything
+VS Code** — each merges a `wintask-scheduler` entry into the right config file (preserving anything
 already there) pointing at the bundled server. Restart the CLI/editor afterward.
 
 To do it manually, set the MCP client's launch command. **When the app is installed** (from the
 Microsoft Store or an MSIX package) it registers a stable app-execution alias, so the command is
-simply `WindowsTaskerMcp.exe` — Windows resolves it from `%LOCALAPPDATA%\Microsoft\WindowsApps`
+simply `WinTaskSchedulerMcp.exe` — Windows resolves it from `%LOCALAPPDATA%\Microsoft\WindowsApps`
 (on `PATH`) to the installed server, and it keeps working across app updates regardless of install
 location. For an **unpackaged dev run**, use the absolute path to the built `Tasker.Mcp.exe`.
 
@@ -105,9 +125,9 @@ location. For an **unpackaged dev run**, use the absolute path to the built `Tas
 ```json
 {
   "mcpServers": {
-    "windows-tasker": {
+    "wintask-scheduler": {
       "type": "stdio",
-      "command": "WindowsTaskerMcp.exe",
+      "command": "WinTaskSchedulerMcp.exe",
       "args": [],
       "tools": []
     }
@@ -124,9 +144,9 @@ command with the absolute path to the built server, e.g.
 ```json
 {
   "servers": {
-    "windows-tasker": {
+    "wintask-scheduler": {
       "type": "stdio",
-      "command": "WindowsTaskerMcp.exe",
+      "command": "WinTaskSchedulerMcp.exe",
       "args": []
     }
   }
@@ -138,7 +158,7 @@ command with the absolute path to the built server, e.g.
 ```json
 {
   "mcpServers": {
-    "windows-tasker": {
+    "wintask-scheduler": {
       "command": "dotnet",
       "args": ["run", "--project", "D:\\Windows Tasker\\Tasker.Mcp\\Tasker.Mcp.csproj", "-c", "Debug"]
     }
@@ -202,7 +222,7 @@ end‑to‑end create verified against `schtasks`, and an AutomationId accessibi
 
 ## License
 
-Windows Tasker's own source code is released under the **MIT License** — see
+Windows Task Studio's own source code is released under the **MIT License** — see
 [`LICENSE`](LICENSE). It depends only on permissive (MIT) libraries plus the
 Microsoft Windows App SDK / Windows SDK build tools, which Microsoft's license
 terms allow redistributing inside applications you build. Third-party components

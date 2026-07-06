@@ -85,6 +85,32 @@
   </Target>
 
   <!--
+    Include the bundled MCP server (staged into $(OutDir)mcp by CopyTaskerMcp) in the real MSIX
+    package payload. MakeAppx builds the package from the computed payload, NOT from arbitrary files
+    a custom Copy dropped into the output folder; without this the manifest's windows.appExecutionAlias
+    (Executable="mcp\Tasker.Mcp.exe") fails MakeAppx validation ("the file ... doesn't exist in the
+    package"). We contribute to @(PackagingOutputs) (rather than @(AppxPackagePayload)) because
+    PackagingOutputs feeds BOTH the regular .msix payload AND the StoreUpload/bundle upload payload
+    (_UnfilteredAppxUploadPackagePayload) in Microsoft.Windows.SDK.BuildTools.MSIX.Packaging.targets;
+    AppxPackagePayload only reaches the non-upload package. The glob is captured into a dedicated item
+    and projected with the SOURCE item's qualified metadata to avoid an MSB4120 self-reference (which
+    would collapse every TargetPath to "mcp\" and collide). DependsOnTargets="CopyTaskerMcp" guarantees
+    the files are staged first. Runs only for packaging builds ('$(AppxPackage)' == 'true'). -->
+  <Target Name="AddTaskerMcpToAppxPayload"
+          DependsOnTargets="CopyTaskerMcp"
+          BeforeTargets="_ComputeAppxPackagePayload"
+          Condition="'$(AppxPackage)' == 'true'">
+    <ItemGroup>
+      <_TaskerMcpPayloadFile Include="$(OutDir)mcp\**\*.*" />
+      <PackagingOutputs Include="@(_TaskerMcpPayloadFile)">
+        <ProjectName>$(ProjectName)</ProjectName>
+        <OutputGroup>TaskerMcpServer</OutputGroup>
+        <TargetPath>mcp\%(_TaskerMcpPayloadFile.RecursiveDir)%(_TaskerMcpPayloadFile.Filename)%(_TaskerMcpPayloadFile.Extension)</TargetPath>
+      </PackagingOutputs>
+    </ItemGroup>
+  </Target>
+
+  <!--
     Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution
     Explorer "Package and Publish" context menu entry to be enabled for this project even if
     the Windows App SDK Nuget package has not yet been restored.

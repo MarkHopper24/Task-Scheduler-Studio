@@ -30,7 +30,7 @@ public partial class AboutPageViewModel : ObservableObject
         return
             "{\n" +
             "  \"" + collectionKey + "\": {\n" +
-            "    \"windows-tasker\": {\n" +
+            "    \"wintask-scheduler\": {\n" +
             "      \"type\": \"stdio\",\n" +
             "      \"command\": \"" + command + "\",\n" +
             "      \"args\": []\n" +
@@ -84,6 +84,7 @@ public sealed partial class AboutPage : Page
         AiToggle.IsOn = AppSettings.AiEnabled;
         StartAssistant.IsEnabled = AppSettings.AiEnabled;
         OnlyTaskerToggle.IsOn = AppSettings.OnlyTaskerTasks;
+        AlwaysAdminToggle.IsOn = AppSettings.AlwaysRunAsAdmin;
         // SelectedIndex maps 1:1 to the StartPage enum order.
         StartPageRadios.SelectedIndex = (int)AppSettings.StartPage;
         _settingsReady = true;
@@ -114,8 +115,31 @@ public sealed partial class AboutPage : Page
         AppSettings.OnlyTaskerTasks = OnlyTaskerToggle.IsOn;
     }
 
+    private async void AlwaysAdminToggle_Toggled(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        if (!_settingsReady) return;
+        AppSettings.AlwaysRunAsAdmin = AlwaysAdminToggle.IsOn;
+
+        // Enabling it from an unelevated session: offer to apply immediately (it also applies
+        // automatically on every future launch). If already elevated there's nothing to do.
+        if (AlwaysAdminToggle.IsOn && !Helpers.Elevation.IsElevated)
+        {
+            var dialog = new ContentDialog
+            {
+                XamlRoot = XamlRoot,
+                Title = "Restart as administrator?",
+                Content = "Windows Task Studio will start elevated automatically from now on. Restart as administrator now to apply it right away?",
+                PrimaryButtonText = "Restart now",
+                CloseButtonText = "Later",
+                DefaultButton = ContentDialogButton.Primary,
+            };
+            if (await dialog.ShowAsync() == ContentDialogResult.Primary && Helpers.Elevation.RelaunchAsAdmin())
+                Microsoft.UI.Xaml.Application.Current.Exit();
+        }
+    }
+
     // ---- Run on Windows sign-in (MSIX StartupTask) ----
-    private const string StartupTaskId = "WindowsTaskerStartup";
+    private const string StartupTaskId = "WinTaskSchedulerStartup";
     private bool _startupReady;
 
     private async Task InitStartupToggleAsync()

@@ -71,7 +71,7 @@ public static class TaskRecipes
     {
         Id = "reminder",
         Title = "Show a reminder pop-up",
-        Description = "Pop up a message on your screen — great for recurring reminders.",
+        Description = "Pop up a message on your screen, great for recurring reminders.",
         Glyph = "\uE7E7", // Message
         Fields = new[]
         {
@@ -87,7 +87,9 @@ public static class TaskRecipes
             return new RecipeResult
             {
                 Command = PowerShell,
-                Arguments = $"-NoProfile -WindowStyle Hidden -Command \"{script}\"",
+                // -EncodedCommand (base64 UTF-16LE) so a title/message containing a double-quote
+                // can't break the outer -Command "…" quoting and silently fail the task at runtime.
+                Arguments = $"-NoProfile -WindowStyle Hidden -EncodedCommand {EncodePs(script)}",
                 Description = "Shows a reminder pop-up message.",
                 SuggestedName = "Reminder",
                 PlainSummary = $"Show a pop-up titled \u201C{f.GetValueOrDefault("title", "Reminder")}\u201D saying \u201C{f.GetValueOrDefault("message", "")}\u201D.",
@@ -180,7 +182,7 @@ public static class TaskRecipes
     {
         Id = "cleanup",
         Title = "Clean up old files",
-        Description = "Move files older than a chosen age to the Recycle Bin (safe — nothing is permanently deleted).",
+        Description = "Move files older than a chosen age to the Recycle Bin (safe: nothing is permanently deleted).",
         Glyph = "\uE74D", // Delete
         Fields = new[]
         {
@@ -206,7 +208,7 @@ public static class TaskRecipes
                 Description = $"Moves files older than {days} days in {folderRaw} to the Recycle Bin.",
                 SuggestedName = "Clean up old files",
                 PlainSummary = $"Move files older than {days} days in \u201C{folderRaw}\u201D to the Recycle Bin.",
-                Warning = "Affected files are sent to the Recycle Bin (recoverable), not permanently deleted. Only files directly in the folder are tidied \u2014 subfolders are left alone.",
+                Warning = "Affected files are sent to the Recycle Bin (recoverable), not permanently deleted. Only files directly in the folder are tidied; subfolders are left alone.",
                 Validation = folderRaw.Length == 0 ? "Pick the folder to tidy." : null,
             };
         },
@@ -252,7 +254,7 @@ public static class TaskRecipes
     {
         Id = "power",
         Title = "Lock, sleep, shut down, or restart",
-        Description = "Schedule a power action — for example shut down the PC every night.",
+        Description = "Schedule a power action, for example shut down the PC every night.",
         Glyph = "\uE7E8", // PowerButton
         Fields = new[]
         {
@@ -321,9 +323,9 @@ public static class TaskRecipes
             new WizardField { Key = "dir", Label = "Work in this folder (optional)", Kind = WizardFieldKind.FolderPath,
                 Help = "Copilot runs here so it can see and change files in this folder. Leave blank to use your home folder." },
             new WizardField { Key = "tools", Label = "Let Copilot run tools automatically?", Kind = WizardFieldKind.Choice,
-                Choices = new[] { "Yes \u2014 let it do the work", "No \u2014 just reply" },
-                Default = "Yes \u2014 let it do the work",
-                Help = "\u201CYes\u201D lets Copilot edit files and run commands without prompting \u2014 needed for unattended tasks." },
+                Choices = new[] { "Yes, let it do the work", "No, just reply" },
+                Default = "Yes, let it do the work",
+                Help = "\u201CYes\u201D lets Copilot edit files and run commands without prompting; needed for unattended tasks." },
             new WizardField { Key = "log", Label = "Save the reply to a file (optional)", Kind = WizardFieldKind.Text,
                 Placeholder = "C:\\Users\\you\\copilot-output.txt",
                 Help = "If set, everything Copilot prints is written here so you can read it later." },
@@ -362,6 +364,11 @@ public static class TaskRecipes
 
     /// <summary>Escapes a value for safe insertion into a single-quoted PowerShell string.</summary>
     private static string Ps(string? value) => (value ?? string.Empty).Replace("'", "''");
+
+    /// <summary>Base64-encodes a PowerShell script for powershell.exe -EncodedCommand (UTF-16LE,
+    /// as PowerShell requires), so free-text user input can't break command-line quoting.</summary>
+    private static string EncodePs(string script) =>
+        Convert.ToBase64String(System.Text.Encoding.Unicode.GetBytes(script));
 
     private static int ParseInt(string? s, int dflt) => int.TryParse(s, out var v) ? v : dflt;
 
