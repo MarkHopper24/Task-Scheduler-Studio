@@ -1,16 +1,31 @@
-# Task Scheduler Studio
+<h1 align="center">
+  <img src="WinTask%20Logo.png" alt="Task Scheduler Studio" height="60"><br>
+  Task Scheduler Studio
+</h1>
 
-A beautiful, Fluent **WinUI 3** replacement for the Windows Task Scheduler, plus a local **MCP
-server** so AI agents can manage scheduled tasks. Both share one engine and write to the **live
-Windows Task Scheduler store**, so every task is fully interoperable with the built‑in Task
-Scheduler — create a task in either tool and it appears, runs, and edits identically in the other.
+<h4 align="center">A modern, Fluent WinUI 3 reimagining of Windows Task Scheduler, with natural-language task creation and a local MCP server for AI agents.</h4>
+
+<p align="center">
+  <a href="#overview">Overview</a> •
+  <a href="#solution-layout">Solution layout</a> •
+  <a href="#script-library">Script library</a> •
+  <a href="#build--run">Build &amp; run</a> •
+  <a href="#the-mcp-server">MCP server</a> •
+  <a href="#license">License</a>
+</p>
+
+![Tasks](screenshots/01-tasks.png)
+
+## Overview
+
+Task Scheduler Studio is a modern WinUI 3 reimagining of the built-in Windows Task Scheduler. It reads and writes the live Windows Task Scheduler store through the Task Scheduler V2 COM API, so everything you create is a normal scheduled task: visible in `taskschd.msc`, queryable with `schtasks`, and fully interoperable with the built-in tool. There is no separate database — create a task in either tool and it appears, runs, and edits identically in the other.
+
+The app pairs that engine with a clean Fluent interface and, optionally, AI. A built-in GitHub Copilot assistant lets you create and manage tasks in plain English, and a bundled local MCP server exposes the same engine to your favorite AI agents, so both the UI and agents always behave identically.
 
 > **Disclaimer:** Task Scheduler Studio was created by a Microsoft employee as an individual personal
 > project and proof of concept. It is **not** an official Microsoft product, service, or offering,
 > and it is **not affiliated with, endorsed by, or supported by Microsoft**. All work and opinions
 > are the developer's own.
-
-![Tasks](screenshots/01-tasks.png)
 
 ## Why it's cross‑compatible
 
