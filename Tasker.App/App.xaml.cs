@@ -65,6 +65,10 @@ public partial class App : Application
         Window = new MainWindow();
         DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
         Tasker_App.Services.TaskWatcher.EnsureRegistered();
+        // Best-effort: keeps the staged copy of the bundled MCP server (see
+        // CopilotAssistant.EnsureStagedMcpServer) current so external tools can find it without
+        // waiting for the user to open Settings first.
+        Services.CopilotAssistant.WarmMcpServerStaging();
         Window.Activate();
     }
 }

@@ -127,6 +127,30 @@ public partial class TaskEditorViewModel : ObservableObject
     [ObservableProperty]
     public partial string ValidationMessage { get; set; } = string.Empty;
 
+    /// <summary>Live, plain-language recap of the active run conditions, shown on the designer's
+    /// "Only run if" card. Recomputed on any property change.</summary>
+    public string ConditionsSummary
+    {
+        get
+        {
+            var parts = new List<string>();
+            if (DisallowStartIfOnBatteries) parts.Add("only on AC power");
+            if (RunOnlyIfNetworkAvailable) parts.Add("only with a network connection");
+            if (RunOnlyIfIdle) parts.Add("only when the PC is idle");
+            if (StartWhenAvailable) parts.Add("catching up missed runs");
+            if (WakeToRun) parts.Add("waking the PC if asleep");
+            if (RestartOnFailure) parts.Add("retrying if it fails");
+            return parts.Count == 0 ? "Runs under any conditions" : "Runs " + string.Join(", ", parts);
+        }
+    }
+
+    protected override void OnPropertyChanged(System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        base.OnPropertyChanged(e);
+        if (e.PropertyName != nameof(ConditionsSummary))
+            OnPropertyChanged(nameof(ConditionsSummary));
+    }
+
     public TaskEditorViewModel(TaskDetailDto? existing = null, bool asDuplicate = false)
     {
         SelectedTimeLimit = TimeLimitOptions[3];

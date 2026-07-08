@@ -1,6 +1,7 @@
 using Microsoft.UI;
 using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Windows.UI;
 
@@ -51,6 +52,15 @@ public static class ThemeManager
             };
         }
         UpdateCaptionButtons(window);
+    }
+
+    /// <summary>ContentDialogs render in a separate popup layer and don't reliably inherit
+    /// RequestedTheme from the window's root element, so every dialog must have its theme applied
+    /// explicitly (call this right after construction, before ShowAsync).</summary>
+    public static void ApplyToDialog(ContentDialog dialog)
+    {
+        if (App.Window?.Content is FrameworkElement root)
+            dialog.RequestedTheme = root.ActualTheme;
     }
 
     private static void UpdateCaptionButtons(Window window)

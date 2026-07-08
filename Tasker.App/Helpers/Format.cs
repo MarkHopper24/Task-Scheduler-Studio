@@ -92,7 +92,21 @@ public static class Format
 
     public static string NotEmptyOrDash(string value) => string.IsNullOrWhiteSpace(value) ? "-" : value;
 
+    /// <summary>Friendly folder label: blank for the root folder ("\") so cards/lists don't show a lone backslash.</summary>
+    public static string FolderLabel(string? folder) =>
+        string.IsNullOrEmpty(folder) || folder == "\\" ? string.Empty : folder;
+
+    /// <summary>Collapses a folder line when the task lives in the root folder (nothing useful to show).</summary>
+    public static Visibility FolderVisibility(string? folder) =>
+        string.IsNullOrEmpty(folder) || folder == "\\" ? Visibility.Collapsed : Visibility.Visible;
+
     public static bool IsNotEmpty(string value) => !string.IsNullOrWhiteSpace(value);
+
+    /// <summary>Visible only when a collection is empty (for empty-state prompts).</summary>
+    public static Visibility VisibleWhenEmpty(int count) => count == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+    /// <summary>Visible only when a collection has at least one item.</summary>
+    public static Visibility VisibleWhenAny(int count) => count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
     public static string AuthGlyph(GhAuthState state) => state switch
     {

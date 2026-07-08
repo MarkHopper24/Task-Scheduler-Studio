@@ -104,3 +104,6 @@ test-screenshot.png
 # Keep the curated README screenshots even though loose root PNGs are ignored above
 !screenshots/
 !screenshots/**
+
+# Local packaging/distribution output (msixbundle, signing .pfx, store assets) — never commit
+dist/

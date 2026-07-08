@@ -148,4 +148,7 @@ public partial class PinnableTask : ObservableObject
 
     [ObservableProperty]
     public partial bool IsPinned { get; set; }
+
+    // Accessible name for the Quick Launch item container (avoids announcing the class name).
+    public override string ToString() => Name;
 }

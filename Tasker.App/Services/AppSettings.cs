@@ -37,15 +37,16 @@ public static class AppSettings
         set => Local.Values[IncludeSubfoldersKey] = value;
     }
 
-    /// <summary>When true, the Tasks list only shows tasks created by WinTask Scheduler
-    /// (RegistrationInfo Source == "WinTask Scheduler") and hides all other Task Scheduler tasks.</summary>
+    /// <summary>When true, the Tasks list only shows tasks created by Task Scheduler Studio
+    /// (RegistrationInfo Source matches <see cref="Tasker.Core.TaskerService.AppSource"/> or its
+    /// prior product name) and hides all other Task Scheduler tasks.</summary>
     public static bool OnlyTaskerTasks
     {
         get => Local.Values[OnlyTaskerTasksKey] is bool b ? b : false;
         set => Local.Values[OnlyTaskerTasksKey] = value;
     }
 
-    /// <summary>When true, WinTask Scheduler relaunches elevated (with a UAC prompt) on every launch
+    /// <summary>When true, Task Scheduler Studio relaunches elevated (with a UAC prompt) on every launch
     /// if it isn't already running as administrator — so highest-privileges tasks and protected
     /// system tasks can be managed without choosing "Restart as administrator" each time.</summary>
     public static bool AlwaysRunAsAdmin

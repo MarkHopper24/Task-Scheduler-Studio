@@ -9,8 +9,10 @@ namespace Tasker_App.Dialogs;
 /// <summary>
 /// Lets the user pick which enabled tasks to pin to Quick Launch. Loads all enabled tasks,
 /// pre-checks the currently-pinned ones, and exposes the chosen paths via <see cref="SelectedPaths"/>.
+/// Hosted as the <c>Content</c> of a plain <see cref="ContentDialog"/> built by the caller (see
+/// <c>QuickLaunchPage.Add_Click</c>), which wires <see cref="OnSave"/> to its PrimaryButtonClick.
 /// </summary>
-public sealed partial class QuickLaunchPickerDialog : ContentDialog
+public sealed partial class QuickLaunchPickerDialogPage : Page
 {
     private readonly HashSet<string> _initiallyPinned;
 
@@ -20,12 +22,11 @@ public sealed partial class QuickLaunchPickerDialog : ContentDialog
     /// <summary>The task paths the user chose to pin (only valid after a "Save" result).</summary>
     public IReadOnlyList<string> SelectedPaths { get; private set; } = Array.Empty<string>();
 
-    public QuickLaunchPickerDialog(IEnumerable<string> currentlyPinned)
+    public QuickLaunchPickerDialogPage(IEnumerable<string> currentlyPinned)
     {
         _initiallyPinned = new HashSet<string>(currentlyPinned, StringComparer.OrdinalIgnoreCase);
         InitializeComponent();
         Loaded += OnLoaded;
-        PrimaryButtonClick += OnSave;
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -81,7 +82,7 @@ public sealed partial class QuickLaunchPickerDialog : ContentDialog
         }
     }
 
-    private void OnSave(ContentDialog sender, ContentDialogButtonClickEventArgs args)
+    public void OnSave(ContentDialog sender, ContentDialogButtonClickEventArgs args)
     {
         // Honour every checkbox the user toggled, even ones currently filtered out of view.
         SelectedPaths = AllTasks.Where(t => t.IsPinned).Select(t => t.Path).ToList();

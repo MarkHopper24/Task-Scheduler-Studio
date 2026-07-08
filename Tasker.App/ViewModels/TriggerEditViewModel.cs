@@ -84,6 +84,10 @@ public partial class TriggerEditViewModel : ObservableObject
     [ObservableProperty] public partial DateTimeOffset ExpireDate { get; set; } = DateTimeOffset.Now.AddYears(1);
     [ObservableProperty] public partial TimeSpan ExpireTime { get; set; } = DateTime.Now.TimeOfDay;
 
+    /// <summary>Designer-only: whether this trigger's card is expanded. New triggers start expanded;
+    /// triggers loaded from an existing task (see <see cref="FromDto"/>) start collapsed to a summary.</summary>
+    [ObservableProperty] public partial bool IsExpanded { get; set; } = true;
+
     public bool ShowStart => Kind is TriggerKind.OneTime or TriggerKind.Daily or TriggerKind.Weekly
         or TriggerKind.Monthly or TriggerKind.MonthlyDOW;
     public bool ShowDaily => Kind == TriggerKind.Daily;
@@ -127,6 +131,91 @@ public partial class TriggerEditViewModel : ObservableObject
         _ => Kind.ToString(),
     };
 
+    /// <summary>A live, plain-language one-line recap of this trigger, shown on the designer card
+    /// header (e.g. "Every day at 9:00 AM", "Weekly on Mon, Wed at 6:00 PM"). Recomputed whenever
+    /// any field changes (see the <see cref="OnPropertyChanged"/> override).</summary>
+    public string Summary => BuildSummary();
+
+    /// <summary>Any property change re-raises <see cref="Summary"/> so the card header stays live.</summary>
+    protected override void OnPropertyChanged(System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        base.OnPropertyChanged(e);
+        if (e.PropertyName != nameof(Summary))
+            OnPropertyChanged(nameof(Summary));
+    }
+
+    private string TimeText() => (DateTime.Today + StartTime).ToString("h:mm tt");
+
+    private string WeekdayList()
+    {
+        var days = new List<string>();
+        if (Monday) days.Add("Mon");
+        if (Tuesday) days.Add("Tue");
+        if (Wednesday) days.Add("Wed");
+        if (Thursday) days.Add("Thu");
+        if (Friday) days.Add("Fri");
+        if (Saturday) days.Add("Sat");
+        if (Sunday) days.Add("Sun");
+        return days.Count == 0 ? "no days" : string.Join(", ", days);
+    }
+
+    /// <summary>Segoe Fluent icon glyph representing this trigger kind (designer card icon).</summary>
+    public string Glyph => Kind switch
+    {
+        TriggerKind.OneTime => "\uE823",          // DateTime
+        TriggerKind.Daily => "\uE787",            // Calendar
+        TriggerKind.Weekly => "\uE787",
+        TriggerKind.Monthly => "\uE787",
+        TriggerKind.MonthlyDOW => "\uE787",
+        TriggerKind.AtStartup => "\uE7E8",        // PowerButton
+        TriggerKind.AtLogOn => "\uE77B",          // Contact
+        TriggerKind.OnIdle => "\uE708",           // QuietHours
+        TriggerKind.OnEvent => "\uEC24",          // LightningBolt-ish
+        TriggerKind.OnSessionStateChange => "\uE72E", // Lock
+        _ => "\uE823",
+    };
+
+    private string BuildSummary()
+    {
+        string s = Kind switch
+        {
+            TriggerKind.OneTime => $"Once on {StartDate:M/d/yyyy} at {TimeText()}",
+            TriggerKind.Daily => DaysInterval > 1
+                ? $"Every {DaysInterval} days at {TimeText()}"
+                : $"Every day at {TimeText()}",
+            TriggerKind.Weekly => WeeksInterval > 1
+                ? $"Every {WeeksInterval} weeks on {WeekdayList()} at {TimeText()}"
+                : $"Weekly on {WeekdayList()} at {TimeText()}",
+            TriggerKind.Monthly => RunOnLastDayOfMonth
+                ? $"Monthly on the last day at {TimeText()}"
+                : $"Monthly on day {DaysOfMonthText} at {TimeText()}",
+            TriggerKind.MonthlyDOW => $"Monthly on {SelectedWeeksText()} {WeekdayList()} at {TimeText()}",
+            TriggerKind.AtStartup => DelayMinutes > 0
+                ? $"When the computer starts (after {DelayMinutes} min)"
+                : "When the computer starts",
+            TriggerKind.AtLogOn => string.IsNullOrWhiteSpace(LogonUser)
+                ? "When any user signs in"
+                : $"When {LogonUser} signs in",
+            TriggerKind.OnIdle => "When the computer is idle",
+            TriggerKind.OnEvent => "When a specific event is logged",
+            TriggerKind.OnSessionStateChange => $"On {StateChange}",
+            _ => Header,
+        };
+        if (!Enabled) s += " (disabled)";
+        return s;
+    }
+
+    private string SelectedWeeksText()
+    {
+        var weeks = new List<string>();
+        if (WeekFirst) weeks.Add("first");
+        if (WeekSecond) weeks.Add("second");
+        if (WeekThird) weeks.Add("third");
+        if (WeekFourth) weeks.Add("fourth");
+        if (WeekLast) weeks.Add("last");
+        return weeks.Count == 0 ? "the" : "the " + string.Join(", ", weeks);
+    }
+
     /// <summary>
     /// The currently selected friendly option, kept in sync with <see cref="Kind"/>. Bound to the
     /// Type ComboBox's SelectedItem so it shows the plain-language label while editing the enum.
@@ -163,6 +252,7 @@ public partial class TriggerEditViewModel : ObservableObject
             Subscription = dto.Subscription ?? string.Empty,
             StateChange = dto.StateChange ?? "ConsoleConnect",
             RunOnLastDayOfMonth = dto.RunOnLastDayOfMonth,
+            IsExpanded = false,
         };
         if (dto.StartBoundary is { } sb) { vm.StartDate = new DateTimeOffset(sb); vm.StartTime = sb.TimeOfDay; }
         foreach (var d in dto.DaysOfWeek) vm.SetDay(d, true);
