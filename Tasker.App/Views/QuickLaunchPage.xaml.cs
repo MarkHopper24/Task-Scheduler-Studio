@@ -77,6 +77,7 @@ public sealed partial class QuickLaunchPage : Page
         dialog.Resources["ContentDialogMaxHeight"] = 760d;
         dialog.PrimaryButtonClick += page.OnSave;
 
+        Services.ThemeManager.ApplyToDialog(dialog);
         if (await dialog.ShowAsync() == ContentDialogResult.Primary)
         {
             await ViewModel.ApplyPinnedAsync(page.SelectedPaths);

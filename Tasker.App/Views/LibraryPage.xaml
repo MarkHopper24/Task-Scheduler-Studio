@@ -143,106 +143,123 @@
                     Text="Select a script to preview and tweak it." />
             </StackPanel>
 
-            <ScrollViewer x:Name="PreviewContent" Visibility="Collapsed">
-                <StackPanel Spacing="14" Padding="0,0,4,0">
-                    <Grid ColumnSpacing="12">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <FontIcon
-                            x:Name="PreviewGlyph"
-                            Grid.Column="0"
-                            VerticalAlignment="Center"
-                            FontSize="24"
-                            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                            Glyph="&#xE756;" />
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                            <TextBlock x:Name="PreviewTitle" Style="{StaticResource SubtitleTextBlockStyle}" />
-                            <TextBlock
-                                x:Name="PreviewDescription"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                TextWrapping="Wrap" />
-                        </StackPanel>
-                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                            <Button AutomationProperties.AutomationId="CopyScriptButton" Click="Copy_Click" ToolTipService.ToolTip="Copy the script to the clipboard">
-                                <FontIcon FontSize="14" Glyph="&#xE8C8;" />
-                            </Button>
-                            <Button AutomationProperties.AutomationId="ScriptMoreButton" ToolTipService.ToolTip="More">
-                                <FontIcon FontSize="14" Glyph="&#xE712;" />
-                                <Button.Flyout>
-                                    <MenuFlyout>
-                                        <MenuFlyoutItem x:Name="DuplicateItem" Click="Duplicate_Click" Text="Duplicate to my library">
-                                            <MenuFlyoutItem.Icon>
-                                                <FontIcon Glyph="&#xE8C8;" />
-                                            </MenuFlyoutItem.Icon>
-                                        </MenuFlyoutItem>
-                                        <MenuFlyoutItem x:Name="EditItem" Click="Edit_Click" Text="Edit script">
-                                            <MenuFlyoutItem.Icon>
-                                                <FontIcon Glyph="&#xE70F;" />
-                                            </MenuFlyoutItem.Icon>
-                                        </MenuFlyoutItem>
-                                        <MenuFlyoutItem x:Name="DeleteItem" Click="Delete_Click" Text="Delete script">
-                                            <MenuFlyoutItem.Icon>
-                                                <FontIcon Glyph="&#xE74D;" />
-                                            </MenuFlyoutItem.Icon>
-                                        </MenuFlyoutItem>
-                                    </MenuFlyout>
-                                </Button.Flyout>
-                            </Button>
-                            <Button
-                                AutomationProperties.AutomationId="CreateTaskButton"
-                                Click="CreateTask_Click"
-                                Style="{StaticResource AccentButtonStyle}">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <FontIcon FontSize="14" Glyph="&#xE710;" />
-                                    <TextBlock Text="Create task" />
-                                </StackPanel>
-                            </Button>
-                        </StackPanel>
-                    </Grid>
+            <Grid x:Name="PreviewContent" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
 
-                    <InfoBar
-                        x:Name="AdminHint"
-                        IsClosable="False"
-                        IsOpen="False"
-                        Severity="Informational"
-                        Title="Needs administrator"
-                        Message="This script needs elevation. The task will be set to run with highest privileges." />
-
-                    <StackPanel x:Name="ParametersSection" Spacing="8">
-                        <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Settings" />
-                        <StackPanel x:Name="FieldsPanel" Spacing="12" />
-                    </StackPanel>
-
-                    <StackPanel Spacing="6">
+                <!--  Header, description, and settings fields scroll on their own so the script
+                      box below always keeps the remaining vertical space.  -->
+                <ScrollViewer Grid.Row="0" Padding="0,0,4,0">
+                    <StackPanel Spacing="14">
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" VerticalAlignment="Center" Style="{StaticResource BodyStrongTextBlockStyle}" Text="Script" />
-                            <TextBlock
-                                Grid.Column="1"
+                            <FontIcon
+                                x:Name="PreviewGlyph"
+                                Grid.Column="0"
                                 VerticalAlignment="Center"
-                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                Style="{StaticResource CaptionTextBlockStyle}"
-                                Text="You can edit this before creating the task." />
+                                FontSize="24"
+                                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                Glyph="&#xE756;" />
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                <TextBlock x:Name="PreviewTitle" Style="{StaticResource SubtitleTextBlockStyle}" />
+                                <TextBlock
+                                    x:Name="PreviewDescription"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <Button AutomationProperties.AutomationId="CopyScriptButton" Click="Copy_Click" ToolTipService.ToolTip="Copy the script to the clipboard">
+                                    <FontIcon FontSize="14" Glyph="&#xE8C8;" />
+                                </Button>
+                                <Button AutomationProperties.AutomationId="ScriptMoreButton" ToolTipService.ToolTip="More">
+                                    <FontIcon FontSize="14" Glyph="&#xE712;" />
+                                    <Button.Flyout>
+                                        <MenuFlyout>
+                                            <MenuFlyoutItem x:Name="DuplicateItem" Click="Duplicate_Click" Text="Duplicate to my library">
+                                                <MenuFlyoutItem.Icon>
+                                                    <FontIcon Glyph="&#xE8C8;" />
+                                                </MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
+                                            <MenuFlyoutItem x:Name="EditItem" Click="Edit_Click" Text="Edit script">
+                                                <MenuFlyoutItem.Icon>
+                                                    <FontIcon Glyph="&#xE70F;" />
+                                                </MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
+                                            <MenuFlyoutItem x:Name="DeleteItem" Click="Delete_Click" Text="Delete script">
+                                                <MenuFlyoutItem.Icon>
+                                                    <FontIcon Glyph="&#xE74D;" />
+                                                </MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
+                                        </MenuFlyout>
+                                    </Button.Flyout>
+                                </Button>
+                                <Button
+                                    AutomationProperties.AutomationId="CreateTaskButton"
+                                    Click="CreateTask_Click"
+                                    Style="{StaticResource AccentButtonStyle}">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <FontIcon FontSize="14" Glyph="&#xE710;" />
+                                        <TextBlock Text="Create task" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
                         </Grid>
-                        <TextBox
-                            x:Name="ScriptBox"
-                            AutomationProperties.AutomationId="ScriptBox"
-                            AcceptsReturn="True"
-                            FontFamily="Consolas"
-                            Height="320"
-                            IsSpellCheckEnabled="False"
-                            ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                            ScrollViewer.VerticalScrollBarVisibility="Auto"
-                            TextWrapping="NoWrap" />
+
+                        <InfoBar
+                            x:Name="AdminHint"
+                            IsClosable="False"
+                            IsOpen="False"
+                            Severity="Informational"
+                            Title="Needs administrator"
+                            Message="This script needs elevation. The task will be set to run with highest privileges." />
+
+                        <StackPanel x:Name="ParametersSection" Spacing="8">
+                            <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Settings" />
+                            <StackPanel x:Name="FieldsPanel" Spacing="12" />
+                        </StackPanel>
                     </StackPanel>
-                </StackPanel>
-            </ScrollViewer>
+                </ScrollViewer>
+
+                <!--  Script box fills whatever vertical space remains and grows/shrinks with the
+                      window instead of using a fixed height.  -->
+                <Grid Grid.Row="1" Margin="0,14,0,0" RowSpacing="6">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" VerticalAlignment="Center" Style="{StaticResource BodyStrongTextBlockStyle}" Text="Script" />
+                        <TextBlock
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="You can edit this before creating the task." />
+                    </Grid>
+                    <TextBox
+                        x:Name="ScriptBox"
+                        Grid.Row="1"
+                        AutomationProperties.AutomationId="ScriptBox"
+                        AcceptsReturn="True"
+                        FontFamily="Consolas"
+                        MinHeight="120"
+                        IsSpellCheckEnabled="False"
+                        ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                        ScrollViewer.VerticalScrollBarVisibility="Auto"
+                        TextWrapping="NoWrap"
+                        VerticalAlignment="Stretch" />
+                </Grid>
+            </Grid>
         </Grid>
     </Grid>
 </Page>

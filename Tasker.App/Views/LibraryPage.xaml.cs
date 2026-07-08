@@ -259,6 +259,7 @@ public sealed partial class LibraryPage : Page
         dialog.Resources["ContentDialogMaxHeight"] = 900d;
         dialog.PrimaryButtonClick += page.OnSave;
 
+        Services.ThemeManager.ApplyToDialog(dialog);
         await dialog.ShowAsync();
         if (page.Saved && page.Result is { } saved)
         {
@@ -283,6 +284,7 @@ public sealed partial class LibraryPage : Page
             CloseButtonText = "Cancel",
             DefaultButton = ContentDialogButton.Close,
         };
+        Services.ThemeManager.ApplyToDialog(confirm);
         if (await confirm.ShowAsync() != ContentDialogResult.Primary) return;
 
         ScriptLibraryStore.Delete(id);

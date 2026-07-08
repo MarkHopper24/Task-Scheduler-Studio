@@ -23,14 +23,14 @@ public partial class FolderNode : ObservableObject
     {
         Name = dto.Name;
         Path = dto.Path;
-        // When filtering to Windows Task Studio tasks, show this folder's direct Tasker-task count
+        // When filtering to Task Scheduler Studio tasks, show this folder's direct Tasker-task count
         // (0 if it only contains them in descendants); otherwise show the real total.
         TaskCount = taskerCounts is null
             ? dto.TaskCount
             : (taskerCounts.TryGetValue(dto.Path, out var c) ? c : 0);
         foreach (var child in dto.Children)
         {
-            // While filtering, skip folders whose subtree has no Windows Task Studio tasks.
+            // While filtering, skip folders whose subtree has no Task Scheduler Studio tasks.
             if (visiblePaths is not null && !visiblePaths.Contains(child.Path)) continue;
             Children.Add(new FolderNode(child, false, visiblePaths, taskerCounts));
         }

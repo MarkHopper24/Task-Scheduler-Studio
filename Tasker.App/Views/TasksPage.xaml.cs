@@ -123,6 +123,7 @@ public sealed partial class TasksPage : Page
             CloseButtonText = "Cancel",
             DefaultButton = ContentDialogButton.Close,
         };
+        Services.ThemeManager.ApplyToDialog(confirm);
         if (await confirm.ShowAsync() != ContentDialogResult.Primary) return;
 
         await ViewModel.BulkAsync(p => Services.TaskerClient.DeleteTaskAsync(p), "Deleted");
@@ -197,6 +198,7 @@ public sealed partial class TasksPage : Page
         };
         dialog.PrimaryButtonClick += page.OnMove;
 
+        Services.ThemeManager.ApplyToDialog(dialog);
         await dialog.ShowAsync();
         return page.Moved;
     }
@@ -241,6 +243,7 @@ public sealed partial class TasksPage : Page
         dialog.SecondaryButtonClick += page.OnSecondary;
         page.Attach(dialog);
 
+        Services.ThemeManager.ApplyToDialog(dialog);
         await dialog.ShowAsync();
         if (page.Created)
         {
@@ -333,6 +336,7 @@ public sealed partial class TasksPage : Page
         dialog.Resources["ContentDialogMaxHeight"] = 1600d;
         dialog.PrimaryButtonClick += page.OnSave;
 
+        Services.ThemeManager.ApplyToDialog(dialog);
         await dialog.ShowAsync();
         if (page.Saved)
         {
@@ -355,6 +359,7 @@ public sealed partial class TasksPage : Page
             CloseButtonText = "Cancel",
             DefaultButton = ContentDialogButton.Primary,
         };
+        Services.ThemeManager.ApplyToDialog(dialog);
         if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
 
         var name = input.Text.Trim();
@@ -384,6 +389,7 @@ public sealed partial class TasksPage : Page
             CloseButtonText = "Cancel",
             DefaultButton = ContentDialogButton.Close,
         };
+        Services.ThemeManager.ApplyToDialog(confirm);
         if (await confirm.ShowAsync() != ContentDialogResult.Primary) return;
 
         var result = await Services.TaskerClient.DeleteFolderAsync(folder);
@@ -412,6 +418,7 @@ public sealed partial class TasksPage : Page
             CloseButtonText = "Cancel",
             DefaultButton = ContentDialogButton.Close,
         };
+        Services.ThemeManager.ApplyToDialog(confirm);
         if (await confirm.ShowAsync() != ContentDialogResult.Primary) return;
 
         var result = await Services.TaskerClient.DeleteTaskAsync(path);
@@ -442,7 +449,7 @@ public sealed partial class TasksPage : Page
         var folder = ViewModel.SelectedFolder?.Path ?? "\\";
 
         // Importing an external .xml is bringing in a pre-existing definition, so preserve its
-        // original <Source> (don't stamp it as created by Windows Task Studio), matching restore.
+        // original <Source> (don't stamp it as created by Task Scheduler Studio), matching restore.
         var result = await Services.TaskerClient.ImportXmlAsync(folder, name, xml, stampSource: false);
         if (result.Success)
         {

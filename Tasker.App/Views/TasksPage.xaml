@@ -273,6 +273,8 @@
             <Grid Grid.Row="1" ColumnSpacing="12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
@@ -281,8 +283,24 @@
                     AutomationProperties.AutomationId="IncludeSubfoldersCheck"
                     Content="Include subfolders"
                     IsChecked="{x:Bind ViewModel.IncludeSubfolders, Mode=TwoWay}" />
-                <StackPanel
+                <ComboBox
+                    Grid.Column="1"
+                    MinWidth="160"
+                    AutomationProperties.AutomationId="ProcessFilterCombo"
+                    AutomationProperties.Name="Filter by process"
+                    ItemsSource="{x:Bind ViewModel.AvailableProcesses}"
+                    SelectedItem="{x:Bind ViewModel.ProcessFilter, Mode=TwoWay}"
+                    ToolTipService.ToolTip="Filter by process" />
+                <ComboBox
                     Grid.Column="2"
+                    MinWidth="140"
+                    AutomationProperties.AutomationId="StatusFilterCombo"
+                    AutomationProperties.Name="Filter by status"
+                    ItemsSource="{x:Bind ViewModel.Statuses}"
+                    SelectedItem="{x:Bind ViewModel.StatusFilter, Mode=TwoWay}"
+                    ToolTipService.ToolTip="Filter by status" />
+                <StackPanel
+                    Grid.Column="4"
                     Orientation="Horizontal"
                     Spacing="8"
                     VerticalAlignment="Center"

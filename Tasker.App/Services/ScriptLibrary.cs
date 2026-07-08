@@ -108,7 +108,7 @@ public static class ScriptLibrary
 
     // Shared toast helper injected into notification scripts. Raises a Windows 11 toast without
     // installing a module or registering an app by borrowing an already-registered AUMID: it tries
-    // Windows Task Studio's packaged AUMID first (so the toast is attributed to the app), then falls
+    // Task Scheduler Studio's packaged AUMID first (so the toast is attributed to the app), then falls
     // back to File Explorer's AUMID.
     private const string ToastFunction =
 """

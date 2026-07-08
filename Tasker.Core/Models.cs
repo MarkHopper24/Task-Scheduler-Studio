@@ -66,6 +66,10 @@ public sealed class TaskSummaryDto
     /// <see cref="TaskerService.AppSource"/> so they can be filtered apart from other tasks.</summary>
     public string Source { get; set; } = string.Empty;
     public bool CreatedByTasker => TaskerService.IsAppSource(Source);
+    /// <summary>File name (e.g. "powershell.exe") of the task's first "run a program" action, used
+    /// to filter the task list by the process it launches. Empty for tasks with no exec action
+    /// (COM handler, e-mail, etc.).</summary>
+    public string ProcessName { get; set; } = string.Empty;
 
     // Drives the accessible name of a ListView row container (screen readers would otherwise
     // announce the class name).
@@ -167,6 +171,9 @@ public sealed class RunningTaskDto
     /// <summary>RegistrationInfo &lt;Source&gt;; <see cref="TaskerService.AppSource"/> for tasks created by this app.</summary>
     public string Source { get; set; } = string.Empty;
     public bool CreatedByTasker => TaskerService.IsAppSource(Source);
+    /// <summary>File name (e.g. "powershell.exe") extracted from <see cref="CurrentAction"/>, used
+    /// to filter the running-tasks list by process.</summary>
+    public string ProcessName { get; set; } = string.Empty;
 
     // Accessible name for a ListView row container (avoids announcing the class name).
     public override string ToString() => Name;

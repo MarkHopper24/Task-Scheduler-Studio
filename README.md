@@ -1,11 +1,11 @@
-# Windows Task Studio
+# Task Scheduler Studio
 
 A beautiful, Fluent **WinUI 3** replacement for the Windows Task Scheduler, plus a local **MCP
 server** so AI agents can manage scheduled tasks. Both share one engine and write to the **live
 Windows Task Scheduler store**, so every task is fully interoperable with the built‑in Task
 Scheduler — create a task in either tool and it appears, runs, and edits identically in the other.
 
-> **Disclaimer:** Windows Task Studio was created by a Microsoft employee as an individual personal
+> **Disclaimer:** Task Scheduler Studio was created by a Microsoft employee as an individual personal
 > project and proof of concept. It is **not** an official Microsoft product, service, or offering,
 > and it is **not affiliated with, endorsed by, or supported by Microsoft**. All work and opinions
 > are the developer's own.
@@ -14,9 +14,9 @@ Scheduler — create a task in either tool and it appears, runs, and edits ident
 
 ## Why it's cross‑compatible
 
-Windows Task Studio talks to the **Task Scheduler V2 COM API** (`Schedule.Service`) through the mature
+Task Scheduler Studio talks to the **Task Scheduler V2 COM API** (`Schedule.Service`) through the mature
 `Microsoft.Win32.TaskScheduler` managed wrapper. That is the *same* API and the *same* task store
-the built‑in Task Scheduler uses — there is no separate database. Anything Windows Task Studio creates is
+the built‑in Task Scheduler uses — there is no separate database. Anything Task Scheduler Studio creates is
 a normal scheduled task: visible in `taskschd.msc`, queryable with `schtasks`, and backed by the
 standard Task Scheduler XML interchange format (Import/Export compatible).
 
@@ -45,7 +45,7 @@ From script library**.
   shown for review before a task is created. Scripts that need elevation are flagged and switch on
   "Run with highest privileges".
 - **Notifications:** the reminder and low-disk-space scripts raise real **Windows 11 toasts** without
-  installing a module or registering an app (they borrow Windows Task Studio's own AUMID, falling back
+  installing a module or registering an app (they borrow Task Scheduler Studio's own AUMID, falling back
   to File Explorer's).
 - **Your own scripts:** create, edit, duplicate (from a built-in), and delete your scripts; they are
   stored as JSON at `%LOCALAPPDATA%\WindowsTasker\script-library.json`.
@@ -55,7 +55,7 @@ From script library**.
 The **Assistant** page embeds the official [GitHub Copilot SDK](https://github.com/github/copilot-sdk)
 (`GitHub.Copilot.SDK`). Describe what you want in plain English — *"run backup.cmd every weekday at
 6pm"* — and the Copilot agent runs a guided flow: it asks for anything that's missing (name, the
-program to run, the schedule), confirms, then calls the Windows Task Studio tools (`create_task`,
+program to run, the schedule), confirms, then calls the Task Scheduler Studio tools (`create_task`,
 `create_task_from_xml`, `list_folders`, `list_tasks`) — the **same tools the MCP server exposes**,
 backed by the shared engine — to write the task into the live Windows store.
 
@@ -65,7 +65,7 @@ backed by the shared engine — to write the task into the live Windows store.
   existing Copilot session. A Copilot subscription is required.
 - **Locked down:** the assistant is hardened on multiple layers — a dedicated **AGENTS.md** and
   system prompt restrict it to scheduled-task work, and a strict **permission handler** allows ONLY
-  the Windows Task Studio task tools to execute, rejecting shell, file, web, memory and every other
+  the Task Scheduler Studio task tools to execute, rejecting shell, file, web, memory and every other
   built-in capability (verified: a jailbreak prompt asking it to run a shell command was refused and
   nothing happened). Tool inputs are validated, and destructive actions require confirmation.
 - **Suggested prompts:** quick chips like *Scan tasks for red flags* (runs `analyze_task` over your
@@ -86,7 +86,7 @@ cd Tasker.App
 ```
 
 > **Elevation:** Creating tasks that *Run with highest privileges*, or editing protected system
-> tasks under `\Microsoft\Windows\…`, requires running Windows Task Studio (or the MCP server) **as
+> tasks under `\Microsoft\Windows\…`, requires running Task Scheduler Studio (or the MCP server) **as
 > administrator** — exactly like the built‑in tool. Everyday per‑user tasks work without elevation.
 
 ## The MCP server
@@ -222,7 +222,7 @@ end‑to‑end create verified against `schtasks`, and an AutomationId accessibi
 
 ## License
 
-Windows Task Studio's own source code is released under the **MIT License** — see
+Task Scheduler Studio's own source code is released under the **MIT License** — see
 [`LICENSE`](LICENSE). It depends only on permissive (MIT) libraries plus the
 Microsoft Windows App SDK / Windows SDK build tools, which Microsoft's license
 terms allow redistributing inside applications you build. Third-party components

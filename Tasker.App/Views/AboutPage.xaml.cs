@@ -128,11 +128,12 @@ public sealed partial class AboutPage : Page
             {
                 XamlRoot = XamlRoot,
                 Title = "Restart as administrator?",
-                Content = "Windows Task Studio will start elevated automatically from now on. Restart as administrator now to apply it right away?",
+                Content = "Task Scheduler Studio will start elevated automatically from now on. Restart as administrator now to apply it right away?",
                 PrimaryButtonText = "Restart now",
                 CloseButtonText = "Later",
                 DefaultButton = ContentDialogButton.Primary,
             };
+            Services.ThemeManager.ApplyToDialog(dialog);
             if (await dialog.ShowAsync() == ContentDialogResult.Primary && Helpers.Elevation.RelaunchAsAdmin())
                 Microsoft.UI.Xaml.Application.Current.Exit();
         }

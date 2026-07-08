@@ -20,6 +20,8 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" VerticalAlignment="Center">
                 <TextBlock Text="Upcoming runs" Style="{StaticResource TitleTextBlockStyle}" />
@@ -28,8 +30,25 @@
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Style="{StaticResource CaptionTextBlockStyle}" />
             </StackPanel>
-            <Button
+            <AutoSuggestBox
                 Grid.Column="1"
+                Width="220"
+                VerticalAlignment="Center"
+                AutomationProperties.AutomationId="UpcomingSearchBox"
+                PlaceholderText="Search upcoming tasks&#x2026;"
+                QueryIcon="Find"
+                Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <ComboBox
+                Grid.Column="2"
+                MinWidth="160"
+                VerticalAlignment="Center"
+                AutomationProperties.AutomationId="UpcomingProcessFilterCombo"
+                AutomationProperties.Name="Filter by process"
+                ItemsSource="{x:Bind ViewModel.AvailableProcesses}"
+                SelectedItem="{x:Bind ViewModel.ProcessFilter, Mode=TwoWay}"
+                ToolTipService.ToolTip="Filter by process" />
+            <Button
+                Grid.Column="3"
                 AutomationProperties.AutomationId="UpcomingRefreshButton"
                 Command="{x:Bind ViewModel.RefreshCommand}">
                 <StackPanel Orientation="Horizontal" Spacing="8">

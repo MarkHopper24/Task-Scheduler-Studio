@@ -1,8 +1,8 @@
-# Privacy Policy — Windows Task Studio
+# Privacy Policy — Task Scheduler Studio
 
 **Effective date:** June 7, 2026
 
-Windows Task Studio ("the app") is a desktop application for Windows that creates,
+Task Scheduler Studio ("the app") is a desktop application for Windows that creates,
 edits, runs, and monitors Windows scheduled tasks. This policy explains what
 data the app handles and how.
 
@@ -16,7 +16,7 @@ choose to use: the AI assistant and GitHub sign-in.
 ### Stored locally on your device
 - **App settings and preferences** — for example theme, window material, the
   default start page, your pinned Quick Launch tasks, the "show only tasks
-  created by Windows Task Studio" filter, run-on-sign-in, and whether AI features are
+  created by Task Scheduler Studio" filter, run-on-sign-in, and whether AI features are
   enabled — are saved in the app's local settings on your device.
 - **Scheduled tasks** you create or edit are written to the Windows Task
   Scheduler store on your device — the same store used by the built-in Task
@@ -84,7 +84,7 @@ GitHub repository.
 
 ---
 
-**Disclaimer:** Windows Task Studio is an individual personal project and proof of
+**Disclaimer:** Task Scheduler Studio is an individual personal project and proof of
 concept created by a Microsoft employee. It is **not** an official Microsoft
 product, service, or offering, and it is **not affiliated with, endorsed by, or
 supported by Microsoft**.

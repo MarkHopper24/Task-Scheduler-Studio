@@ -16,12 +16,12 @@ public sealed class TaskerService : IDisposable
     /// originating from this app (UI or MCP) can be told apart from other Task Scheduler tasks.
     /// This is the app's current product name; see <see cref="IsAppSource"/> for matching tasks
     /// stamped by earlier versions under a previous name.</summary>
-    public const string AppSource = "Windows Task Studio";
+    public const string AppSource = "Task Scheduler Studio";
 
     /// <summary>Previous product name(s) this app was stamped with, kept only so tasks created by
     /// earlier versions still count as "created by this app" after a rename. Never stamp new tasks
     /// with these; use <see cref="AppSource"/>.</summary>
-    private static readonly string[] LegacyAppSources = { "WinTask Scheduler" };
+    private static readonly string[] LegacyAppSources = { "Windows Task Studio", "WinTask Scheduler" };
 
     /// <summary>True if <paramref name="source"/> matches this app's current <see cref="AppSource"/>
     /// or any <see cref="LegacyAppSources"/>, so tasks stamped by earlier versions (under a previous
@@ -175,6 +175,8 @@ public sealed class TaskerService : IDisposable
             dto.Source = def.RegistrationInfo.Source ?? string.Empty;
             dto.TriggersSummary = string.Join("; ", SummarizeTriggers(def));
             dto.ActionsSummary = string.Join("; ", SummarizeActions(def));
+            var exec = def.Actions.OfType<ExecAction>().FirstOrDefault();
+            if (exec is not null) dto.ProcessName = ExtractProcessName(exec.Path);
         }
         catch { /* some protected tasks throw on Definition */ }
         return dto;
@@ -391,6 +393,7 @@ public sealed class TaskerService : IDisposable
                     EnginePid = SafeGet(() => rt.EnginePID, 0u),
                     State = (TaskRunState)(int)SafeGet(() => rt.State, TaskState.Unknown),
                     Source = SafeGet(() => rt.Definition.RegistrationInfo.Source ?? string.Empty, string.Empty),
+                    ProcessName = ExtractProcessName(SafeGet(() => rt.CurrentAction, string.Empty)),
                 });
             }
         }
@@ -828,6 +831,36 @@ public sealed class TaskerService : IDisposable
         ShowMessageAction => "Show message (deprecated)",
         _ => ac.ActionType.ToString(),
     };
+
+    /// <summary>Extracts the process file name (e.g. "powershell.exe") from an exec action's path
+    /// or a running task's <c>CurrentAction</c> string, tolerating quoted paths, environment
+    /// variables, and bare command names. Returns empty for anything that isn't a runnable path.</summary>
+    private static string ExtractProcessName(string? commandOrPath)
+    {
+        if (string.IsNullOrWhiteSpace(commandOrPath)) return string.Empty;
+        var s = commandOrPath.Trim();
+
+        // A leading quote wraps just the executable path; otherwise take the first whitespace-
+        // delimited token so trailing arguments (only present in ActionsSummary-style strings)
+        // don't leak into the result.
+        if (s.Length > 0 && s[0] == '"')
+        {
+            var close = s.IndexOf('"', 1);
+            s = close > 1 ? s[1..close] : s[1..];
+        }
+        else
+        {
+            var space = s.IndexOf(' ');
+            if (space > 0) s = s[..space];
+        }
+
+        try
+        {
+            var name = System.IO.Path.GetFileName(Environment.ExpandEnvironmentVariables(s));
+            return string.IsNullOrWhiteSpace(name) ? string.Empty : name;
+        }
+        catch { return string.Empty; }
+    }
 
     // ---------------------------------------------------------------- Helpers
 

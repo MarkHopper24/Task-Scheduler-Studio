@@ -15,6 +15,23 @@ public partial class TasksPageViewModel : ObservableObject
     public ObservableCollection<FolderNode> Folders { get; } = new();
     public ObservableCollection<TaskSummaryDto> Tasks { get; } = new();
 
+    /// <summary>Distinct process names (e.g. "powershell.exe") seen in the current folder's task
+    /// list, sorted, with the "All processes" sentinel first. Rebuilt whenever tasks reload.</summary>
+    public ObservableCollection<string> AvailableProcesses { get; } = new() { AllProcesses };
+    public const string AllProcesses = "All processes";
+
+    public static readonly string[] AvailableStatuses = { "All statuses", "Ready", "Disabled", "Running", "Queued", "Unknown" };
+
+    // Instance-forwarding property so x:Bind (which needs an instance path) can reach the shared
+    // static list without each ViewModel instance duplicating the array.
+    public string[] Statuses => AvailableStatuses;
+
+    [ObservableProperty]
+    public partial string ProcessFilter { get; set; } = AllProcesses;
+
+    [ObservableProperty]
+    public partial string StatusFilter { get; set; } = "All statuses";
+
     [ObservableProperty]
     public partial FolderNode? SelectedFolder { get; set; }
 
@@ -109,7 +126,7 @@ public partial class TasksPageViewModel : ObservableObject
 
             HashSet<string>? visible = null;
             Dictionary<string, int>? taskerCounts = null;
-            // Global "only Windows Task Studio tasks" filter: also hide folders whose subtree
+            // Global "only Task Scheduler Studio tasks" filter: also hide folders whose subtree
             // contains no Tasker-created tasks.
             if (Services.AppSettings.OnlyTaskerTasks)
             {
@@ -184,6 +201,7 @@ public partial class TasksPageViewModel : ObservableObject
             var folder = SelectedFolder?.Path ?? "\\";
             CurrentFolderPath = folder;
             _allTasks = await TaskerClient.ListTasksAsync(folder, IncludeSubfolders);
+            RebuildAvailableProcesses();
             ApplyFilter();
             StatusMessage = $"{Tasks.Count} task(s) in {folder}";
         }
@@ -197,9 +215,15 @@ public partial class TasksPageViewModel : ObservableObject
     {
         IEnumerable<TaskSummaryDto> view = _allTasks;
 
-        // Global preference (Settings): hide everything not created by Windows Task Studio.
+        // Global preference (Settings): hide everything not created by Task Scheduler Studio.
         if (Services.AppSettings.OnlyTaskerTasks)
             view = view.Where(t => t.CreatedByTasker);
+
+        if (!string.IsNullOrEmpty(ProcessFilter) && ProcessFilter != AllProcesses)
+            view = view.Where(t => string.Equals(t.ProcessName, ProcessFilter, StringComparison.OrdinalIgnoreCase));
+
+        if (!string.IsNullOrEmpty(StatusFilter) && StatusFilter != "All statuses")
+            view = view.Where(t => string.Equals(t.StateText, StatusFilter, StringComparison.OrdinalIgnoreCase));
 
         var q = SearchText?.Trim();
         if (!string.IsNullOrEmpty(q))
@@ -222,6 +246,24 @@ public partial class TasksPageViewModel : ObservableObject
 
         Tasks.Clear();
         foreach (var t in view) Tasks.Add(t);
+    }
+
+    /// <summary>Rebuilds <see cref="AvailableProcesses"/> from the current unfiltered task set,
+    /// keeping the current <see cref="ProcessFilter"/> selection if it's still present.</summary>
+    private void RebuildAvailableProcesses()
+    {
+        var current = ProcessFilter;
+        var names = _allTasks
+            .Select(t => t.ProcessName)
+            .Where(p => !string.IsNullOrEmpty(p))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(p => p, StringComparer.OrdinalIgnoreCase);
+
+        AvailableProcesses.Clear();
+        AvailableProcesses.Add(AllProcesses);
+        foreach (var n in names) AvailableProcesses.Add(n);
+
+        ProcessFilter = AvailableProcesses.Contains(current) ? current : AllProcesses;
     }
 
     private IEnumerable<TaskSummaryDto> Order<TKey>(IEnumerable<TaskSummaryDto> src, Func<TaskSummaryDto, TKey> key) =>
@@ -330,6 +372,10 @@ public partial class TasksPageViewModel : ObservableObject
     }
 
     partial void OnSearchTextChanged(string value) => ApplyFilter();
+
+    partial void OnProcessFilterChanged(string value) => ApplyFilter();
+
+    partial void OnStatusFilterChanged(string value) => ApplyFilter();
 
     async partial void OnSelectedFolderChanged(FolderNode? value)
     {

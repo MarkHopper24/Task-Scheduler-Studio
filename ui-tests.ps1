@@ -95,7 +95,7 @@ $xml = @"
 <?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
   <RegistrationInfo>
-    <Description>Created by Windows Task Studio UI test</Description>
+    <Description>Created by Task Scheduler Studio UI test</Description>
     <Author>UITest</Author>
   </RegistrationInfo>
   <Triggers>
@@ -171,17 +171,17 @@ if ($q -match [regex]::Escape("$folder\$taskName")) {
 
 winapp ui screenshot -a $AppPid -o "screenshots/07-after-create.png" 2>$null
 
-Write-Host "`n=== Source stamp (created tasks are marked 'Windows Task Studio') ===" -ForegroundColor Cyan
+Write-Host "`n=== Source stamp (created tasks are marked 'Task Scheduler Studio') ===" -ForegroundColor Cyan
 # The task above was created via the raw-XML editor whose XML has NO <Source> element. The app
-# must stamp RegistrationInfo <Source> with "Windows Task Studio" so it passes the "only Windows
-# Task Studio tasks" filter (regressed for AI/raw-XML created tasks before this was added).
+# must stamp RegistrationInfo <Source> with "Task Scheduler Studio" so it passes the "only Task
+# Scheduler Studio tasks" filter (regressed for AI/raw-XML created tasks before this was added).
 $xmlOut = schtasks /query /tn "$folder\$taskName" /xml 2>&1 | Out-String
-if ($xmlOut -match '<Source>\s*Windows Task Studio\s*</Source>') {
-    $pass++; $results += @{ name = "Created task is stamped as Windows Task Studio"; status = "PASS" }
-    Write-Host "  PASS: Created task is stamped as Windows Task Studio" -ForegroundColor Green
+if ($xmlOut -match '<Source>\s*Task Scheduler Studio\s*</Source>') {
+    $pass++; $results += @{ name = "Created task is stamped as Task Scheduler Studio"; status = "PASS" }
+    Write-Host "  PASS: Created task is stamped as Task Scheduler Studio" -ForegroundColor Green
 } else {
-    $fail++; $results += @{ name = "Created task is stamped as Windows Task Studio"; status = "FAIL"; detail = $xmlOut }
-    Write-Host "  FAIL: Created task is NOT stamped as Windows Task Studio" -ForegroundColor Red
+    $fail++; $results += @{ name = "Created task is stamped as Task Scheduler Studio"; status = "FAIL"; detail = $xmlOut }
+    Write-Host "  FAIL: Created task is NOT stamped as Task Scheduler Studio" -ForegroundColor Red
 }
 
 Write-Host "`n=== Visual designer ===" -ForegroundColor Cyan

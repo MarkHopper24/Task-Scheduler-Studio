@@ -126,6 +126,7 @@ public sealed partial class DesignerPage : Page
         };
         dialog.Resources["ContentDialogMaxWidth"] = 700d;
 
+        Services.ThemeManager.ApplyToDialog(dialog);
         if (await dialog.ShowAsync() != ContentDialogResult.Primary || page.Chosen is not { } script)
             return;
 
@@ -169,6 +170,7 @@ public sealed partial class DesignerPage : Page
         dialog.Resources["ContentDialogMaxHeight"] = 900d;
         dialog.PrimaryButtonClick += page.OnSave;
 
+        Services.ThemeManager.ApplyToDialog(dialog);
         await dialog.ShowAsync();
         if (page.Saved)
             Frame.Navigate(typeof(TasksPage));
@@ -199,6 +201,7 @@ public sealed partial class DesignerPage : Page
         dialog.Resources["ContentDialogMaxHeight"] = 1600d;
         dialog.PrimaryButtonClick += page.OnSave;
 
+        Services.ThemeManager.ApplyToDialog(dialog);
         await dialog.ShowAsync();
         if (page.Saved)
             Frame.Navigate(typeof(TasksPage));

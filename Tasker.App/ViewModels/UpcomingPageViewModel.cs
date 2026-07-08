@@ -11,6 +11,15 @@ public partial class UpcomingPageViewModel : ObservableObject
 {
     public ObservableCollection<TaskSummaryDto> Upcoming { get; } = new();
 
+    public const string AllProcesses = "All processes";
+    public ObservableCollection<string> AvailableProcesses { get; } = new() { AllProcesses };
+
+    [ObservableProperty]
+    public partial string ProcessFilter { get; set; } = AllProcesses;
+
+    [ObservableProperty]
+    public partial string SearchText { get; set; } = string.Empty;
+
     [ObservableProperty]
     public partial bool IsBusy { get; set; }
 
@@ -21,6 +30,12 @@ public partial class UpcomingPageViewModel : ObservableObject
     public partial TaskSummaryDto? SelectedTask { get; set; }
 
     public bool IsEmpty => Upcoming.Count == 0 && !IsBusy;
+
+    private List<TaskSummaryDto> _allUpcoming = new();
+
+    partial void OnProcessFilterChanged(string value) => ApplyFilter();
+
+    partial void OnSearchTextChanged(string value) => ApplyFilter();
 
     [RelayCommand]
     private async Task RunSelectedAsync()
@@ -49,16 +64,15 @@ public partial class UpcomingPageViewModel : ObservableObject
             var all = await TaskerClient.ListTasksAsync("\\", recursive: true);
             var onlyTasker = Services.AppSettings.OnlyTaskerTasks;
             var now = DateTime.Now;
-            var upcoming = all
+            _allUpcoming = all
                 .Where(t => t.NextRunTime is { } n && n > now)
                 .Where(t => !onlyTasker || t.CreatedByTasker)
                 .OrderBy(t => t.NextRunTime)
                 .Take(200)
                 .ToList();
 
-            Upcoming.Clear();
-            foreach (var t in upcoming) Upcoming.Add(t);
-            StatusMessage = $"{Upcoming.Count} upcoming run(s).";
+            RebuildAvailableProcesses();
+            ApplyFilter();
         }
         catch (Exception ex)
         {
@@ -69,5 +83,43 @@ public partial class UpcomingPageViewModel : ObservableObject
             IsBusy = false;
             OnPropertyChanged(nameof(IsEmpty));
         }
+    }
+
+    private void ApplyFilter()
+    {
+        IEnumerable<TaskSummaryDto> view = _allUpcoming;
+
+        if (!string.IsNullOrEmpty(ProcessFilter) && ProcessFilter != AllProcesses)
+            view = view.Where(t => string.Equals(t.ProcessName, ProcessFilter, StringComparison.OrdinalIgnoreCase));
+
+        var q = SearchText?.Trim();
+        if (!string.IsNullOrEmpty(q))
+        {
+            view = view.Where(t =>
+                t.Name.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                t.TriggersSummary.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                t.ActionsSummary.Contains(q, StringComparison.OrdinalIgnoreCase));
+        }
+
+        Upcoming.Clear();
+        foreach (var t in view) Upcoming.Add(t);
+        StatusMessage = $"{Upcoming.Count} upcoming run(s).";
+        OnPropertyChanged(nameof(IsEmpty));
+    }
+
+    private void RebuildAvailableProcesses()
+    {
+        var current = ProcessFilter;
+        var names = _allUpcoming
+            .Select(t => t.ProcessName)
+            .Where(p => !string.IsNullOrEmpty(p))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(p => p, StringComparer.OrdinalIgnoreCase);
+
+        AvailableProcesses.Clear();
+        AvailableProcesses.Add(AllProcesses);
+        foreach (var n in names) AvailableProcesses.Add(n);
+
+        ProcessFilter = AvailableProcesses.Contains(current) ? current : AllProcesses;
     }
 }

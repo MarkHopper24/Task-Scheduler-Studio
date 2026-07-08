@@ -17,6 +17,9 @@
             <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
             <Setter Property="Margin" Value="2,4,0,2" />
         </Style>
+        <!--  Must be fully opaque: it sits directly on top of ConnectorLineStyle, and Fluent's
+              "layer" card brushes are alpha-blended for use over Mica/Acrylic, which let the
+              connector line bleed straight through the middle of the button.  -->
         <Style x:Key="AddNodeButtonStyle" TargetType="Button">
             <Setter Property="Width" Value="40" />
             <Setter Property="Height" Value="40" />
@@ -24,7 +27,9 @@
             <Setter Property="Padding" Value="0" />
             <Setter Property="HorizontalAlignment" Value="Center" />
             <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="Background" Value="{ThemeResource SolidBackgroundFillColorBaseBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource ControlStrongStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
         </Style>
         <!--  Fixed-height slot so every connection between nodes has identical spacing,
               whether or not it carries an add (+) button.  -->
@@ -38,10 +43,15 @@
             <Setter Property="VerticalAlignment" Value="Stretch" />
             <Setter Property="Fill" Value="{ThemeResource ControlStrongStrokeColorDefaultBrush}" />
         </Style>
+        <!--  FlowCardStyle overrides the Expander's default content padding (16 uniform) to keep
+              consistent breathing room around fields at the bottom of expanded cards (Trigger/
+              Conditions/Action) instead of letting the last field sit flush against the rounded
+              bottom edge.  -->
         <Style x:Key="FlowCardStyle" TargetType="Expander">
             <Setter Property="HorizontalAlignment" Value="Stretch" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="Margin" Value="0,0,0,6" />
+            <Setter Property="Padding" Value="16,16,16,20" />
         </Style>
     </Page.Resources>
 
@@ -128,7 +138,7 @@
                     </StackPanel>
                 </Border>
 
-                <ItemsControl ItemsSource="{x:Bind ViewModel.Triggers}">
+                <ItemsControl Padding="0" ItemsSource="{x:Bind ViewModel.Triggers}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:TriggerEditViewModel">
                             <Expander IsExpanded="{x:Bind IsExpanded, Mode=TwoWay}" Style="{StaticResource FlowCardStyle}">
@@ -259,7 +269,7 @@
                     </StackPanel>
                 </Border>
 
-                <ItemsControl ItemsSource="{x:Bind ViewModel.Actions}">
+                <ItemsControl Padding="0" ItemsSource="{x:Bind ViewModel.Actions}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:ActionEditViewModel">
                             <Expander IsExpanded="{x:Bind IsExpanded, Mode=TwoWay}" Style="{StaticResource FlowCardStyle}">

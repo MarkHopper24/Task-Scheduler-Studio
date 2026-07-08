@@ -231,7 +231,7 @@ public sealed class CopilotAssistant : IAsyncDisposable
             {
                 Model = SelectedModel,
                 WorkingDirectory = workspace,
-                // Hard safety boundary: only the Windows Task Studio task tools may execute. Every other
+                // Hard safety boundary: only the Task Scheduler Studio task tools may execute. Every other
                 // capability the bundled CLI exposes (shell, file read/write, web, memory, hooks,
                 // extensions) is rejected here, regardless of what the model attempts.
                 OnPermissionRequest = HandlePermissionAsync,
@@ -342,7 +342,7 @@ public sealed class CopilotAssistant : IAsyncDisposable
         "memory", "store_memory", "manage_schedule",
     };
 
-    /// <summary>Approves only the Windows Task Studio task tools; rejects shell, file, web, memory, and
+    /// <summary>Approves only the Task Scheduler Studio task tools; rejects shell, file, web, memory, and
     /// every other capability — the hard safety boundary for the embedded agent.</summary>
     private static Task<PermissionDecision> HandlePermissionAsync(PermissionRequest request, PermissionInvocation invocation)
     {
@@ -371,11 +371,11 @@ public sealed class CopilotAssistant : IAsyncDisposable
     }
 
     private const string AgentInstructions = """
-        # Windows Task Studio Agent
+        # Task Scheduler Studio Agent
 
-        You are an assistant embedded in the **Windows Task Studio** desktop app. Your sole purpose is to
+        You are an assistant embedded in the **Task Scheduler Studio** desktop app. Your sole purpose is to
         help the user **create, inspect, and manage Windows Scheduled Tasks** through the provided
-        Windows Task Studio tools.
+        Task Scheduler Studio tools.
 
         ## Allowed tools (the ONLY tools you may use)
         - create_task, create_task_from_xml
@@ -629,13 +629,13 @@ public sealed class CopilotAssistant : IAsyncDisposable
     }
 
     private static string BuildSystemPrompt() => $$"""
-        You are the Windows Task Studio assistant, embedded inside a Windows Task Scheduler replacement
+        You are the Task Scheduler Studio assistant, embedded inside a Windows Task Scheduler replacement
         app. You help the user create, inspect, and manage Windows scheduled tasks using your tools:
         create_task, create_task_from_xml, list_folders, list_tasks, get_task, run_task, stop_task,
         enable_task, disable_task, and delete_task.
 
         Rules:
-        - You are sandboxed: ONLY the Windows Task Studio task tools work. Shell, file, web, and memory
+        - You are sandboxed: ONLY the Task Scheduler Studio task tools work. Shell, file, web, and memory
           tools are blocked, so never attempt them.
         - To CREATE a task, gather a name, the exact program/command to run, and when it should run.
           If any is missing, ask ONE short clarifying question and wait. Then briefly restate the plan
