@@ -27,6 +27,8 @@ The app pairs that engine with a clean Fluent interface and, optionally, AI. A b
 > and it is **not affiliated with, endorsed by, or supported by Microsoft**. All work and opinions
 > are the developer's own.
 
+<sub>This project was built with the help of AI coding tools (GitHub Copilot).</sub>
+
 ## Why it's cross‑compatible
 
 Task Scheduler Studio talks to the **Task Scheduler V2 COM API** (`Schedule.Service`) through the mature
