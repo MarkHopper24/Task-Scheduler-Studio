@@ -63,11 +63,25 @@ public sealed partial class QuickLaunchPage : Page
 
     private async void Add_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new QuickLaunchPickerDialog(AppSettings.QuickLaunch) { XamlRoot = XamlRoot };
+        var page = new QuickLaunchPickerDialogPage(AppSettings.QuickLaunch);
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = "Add to Quick Launch",
+            PrimaryButtonText = "Save",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Primary,
+            Content = page,
+        };
+        dialog.Resources["ContentDialogMaxWidth"] = 720d;
+        dialog.Resources["ContentDialogMaxHeight"] = 760d;
+        dialog.PrimaryButtonClick += page.OnSave;
+
+        Services.ThemeManager.ApplyToDialog(dialog);
         if (await dialog.ShowAsync() == ContentDialogResult.Primary)
         {
-            await ViewModel.ApplyPinnedAsync(dialog.SelectedPaths);
-            ViewModel.ShowStatus($"Quick Launch updated ({dialog.SelectedPaths.Count} pinned).", isError: false);
+            await ViewModel.ApplyPinnedAsync(page.SelectedPaths);
+            ViewModel.ShowStatus($"Quick Launch updated ({page.SelectedPaths.Count} pinned).", isError: false);
         }
     }
 

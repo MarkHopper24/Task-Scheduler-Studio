@@ -21,6 +21,8 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" VerticalAlignment="Center">
                 <TextBlock Text="Running tasks" Style="{StaticResource TitleTextBlockStyle}" />
@@ -29,8 +31,25 @@
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Style="{StaticResource CaptionTextBlockStyle}" />
             </StackPanel>
-            <Button
+            <AutoSuggestBox
                 Grid.Column="1"
+                Width="220"
+                VerticalAlignment="Center"
+                AutomationProperties.AutomationId="RunningSearchBox"
+                PlaceholderText="Search running tasks&#x2026;"
+                QueryIcon="Find"
+                Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <ComboBox
+                Grid.Column="2"
+                MinWidth="160"
+                VerticalAlignment="Center"
+                AutomationProperties.AutomationId="RunningProcessFilterCombo"
+                AutomationProperties.Name="Filter by process"
+                ItemsSource="{x:Bind ViewModel.AvailableProcesses}"
+                SelectedItem="{x:Bind ViewModel.ProcessFilter, Mode=TwoWay}"
+                ToolTipService.ToolTip="Filter by process" />
+            <Button
+                Grid.Column="3"
                 AutomationProperties.AutomationId="RunningStopButton"
                 Command="{x:Bind ViewModel.StopCommand}"
                 IsEnabled="{x:Bind ViewModel.HasSelection, Mode=OneWay}">
@@ -40,10 +59,9 @@
                 </StackPanel>
             </Button>
             <Button
-                Grid.Column="2"
+                Grid.Column="4"
                 AutomationProperties.AutomationId="RunningRefreshButton"
-                Command="{x:Bind ViewModel.RefreshCommand}"
-                Style="{ThemeResource AccentButtonStyle}">
+                Command="{x:Bind ViewModel.RefreshCommand}">
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <FontIcon Glyph="&#xE72C;" FontSize="14" />
                     <TextBlock Text="Refresh" />
@@ -99,11 +117,13 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="2*" />
                                     <ColumnDefinition Width="3*" />
+                                    <ColumnDefinition Width="140" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="Task" Style="{StaticResource BodyStrongTextBlockStyle}" />
                                 <TextBlock Grid.Column="1" Text="Path" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                                <TextBlock Grid.Column="2" Width="80" Text="PID" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock Grid.Column="2" Text="Process" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock Grid.Column="3" Width="80" Text="PID" Style="{StaticResource BodyStrongTextBlockStyle}" />
                             </Grid>
                         </DataTemplate>
                     </ListView.HeaderTemplate>
@@ -113,11 +133,13 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="2*" />
                                     <ColumnDefinition Width="3*" />
+                                    <ColumnDefinition Width="140" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="{x:Bind Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                                 <TextBlock Grid.Column="1" Text="{x:Bind Path}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                                <TextBlock Grid.Column="2" Width="80" Text="{x:Bind EnginePid}" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="2" Text="{x:Bind helpers:Format.NotEmptyOrDash(ProcessName)}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                <TextBlock Grid.Column="3" Width="80" Text="{x:Bind EnginePid}" VerticalAlignment="Center" />
                             </Grid>
                         </DataTemplate>
                     </ListView.ItemTemplate>

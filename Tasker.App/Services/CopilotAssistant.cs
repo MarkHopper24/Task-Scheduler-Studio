@@ -76,16 +76,18 @@ public sealed class CopilotAssistant : IAsyncDisposable
 
     /// <summary>Stable app-execution alias declared in the package manifest for the bundled MCP
     /// server. Resolvable on PATH (via %LOCALAPPDATA%\Microsoft\WindowsApps) once the app is
-    /// installed; unaffected by version/install-location changes.</summary>
+    /// installed; unaffected by version/install-location changes. Used only as a fallback if
+    /// staging (see <see cref="EnsureStagedMcpServer"/>) can't run for some reason.</summary>
     public const string McpAlias = "WinTaskSchedulerMcp.exe";
 
     private static bool IsPackaged => TryPackagePath() is not null;
 
     /// <summary>The command external MCP clients (and the in-app MCP routing) should launch to start
-    /// the bundled server. For an installed/packaged app this is the stable alias <see cref="McpAlias"/>,
-    /// which survives updates and works from any install path; for an unpackaged dev run it's the
-    /// absolute path to the built server exe.</summary>
-    public static string McpServerCommand => IsPackaged ? McpAlias : McpExePath;
+    /// the bundled server. For an installed/packaged app this is a per-user staged copy (see
+    /// <see cref="EnsureStagedMcpServer"/>), so external tools never have to reach into the
+    /// protected WindowsApps folder; for an unpackaged dev run it's the absolute path to the built
+    /// server exe.</summary>
+    public static string McpServerCommand => IsPackaged ? EnsureStagedMcpServer() : McpExePath;
 
     private static string? TryPackagePath()
     {
@@ -94,6 +96,67 @@ public sealed class CopilotAssistant : IAsyncDisposable
     }
 
     public static bool McpAvailable => System.IO.File.Exists(McpExePath);
+
+    /// <summary>Per-user staging folder for the bundled MCP server. The packaged app's real install
+    /// location under WindowsApps is protected: Windows Explorer won't browse it, and other
+    /// processes/users can't reliably reach it directly, even though the app-execution alias
+    /// usually resolves it fine. Staging a plain copy here removes that dependency entirely, so
+    /// external MCP clients (Copilot CLI, VS Code, Claude Code) always get a normal, unrestricted
+    /// path regardless of install method, elevation, or alias registration quirks.</summary>
+    private static string StagedMcpDir => System.IO.Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WindowsTasker", "mcp");
+
+    private static string StagedMcpExePath => System.IO.Path.Combine(StagedMcpDir, "Tasker.Mcp.exe");
+
+    /// <summary>Copies the bundled MCP server from the package's install folder into <see
+    /// cref="StagedMcpDir"/> the first time it's needed, and again whenever the bundled copy is
+    /// newer or a different size (e.g. after an app update). Cheap to call repeatedly: skips the
+    /// copy entirely once the staged copy is already current. Falls back to the app-execution alias
+    /// if staging fails for any reason (e.g. disk full), so the server is still reachable.</summary>
+    private static string EnsureStagedMcpServer()
+    {
+        try
+        {
+            var sourceExe = McpExePath;
+            if (!System.IO.File.Exists(sourceExe)) return McpAlias; // nothing bundled to stage
+
+            var sourceDir = System.IO.Path.GetDirectoryName(sourceExe)!;
+            var stagedExe = StagedMcpExePath;
+
+            var upToDate = System.IO.File.Exists(stagedExe)
+                && System.IO.File.GetLastWriteTimeUtc(sourceExe) == System.IO.File.GetLastWriteTimeUtc(stagedExe)
+                && new System.IO.FileInfo(sourceExe).Length == new System.IO.FileInfo(stagedExe).Length;
+
+            if (!upToDate)
+            {
+                System.IO.Directory.CreateDirectory(StagedMcpDir);
+                foreach (var file in System.IO.Directory.EnumerateFiles(sourceDir, "*", System.IO.SearchOption.AllDirectories))
+                {
+                    var rel = System.IO.Path.GetRelativePath(sourceDir, file);
+                    var dest = System.IO.Path.Combine(StagedMcpDir, rel);
+                    System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(dest)!);
+                    System.IO.File.Copy(file, dest, overwrite: true);
+                    System.IO.File.SetLastWriteTimeUtc(dest, System.IO.File.GetLastWriteTimeUtc(file));
+                }
+            }
+            return stagedExe;
+        }
+        catch
+        {
+            // Staging is best-effort hardening; the alias still works for normal installs.
+            return McpAlias;
+        }
+    }
+
+    /// <summary>Best-effort warm-up so the staged copy (see <see cref="EnsureStagedMcpServer"/>) is
+    /// already current by the time the user opens Settings or an external tool tries to launch it,
+    /// instead of only staging lazily on first read of <see cref="McpServerCommand"/>. Runs on a
+    /// background thread and never throws; safe to call from the UI thread at startup.</summary>
+    public static void WarmMcpServerStaging()
+    {
+        if (!IsPackaged) return;
+        _ = Task.Run(() => { try { EnsureStagedMcpServer(); } catch { /* best-effort */ } });
+    }
 
     /// <summary>Path of the most recently created/updated task (set by the create tools).</summary>
     public string? LastCreatedTaskPath { get; private set; }
@@ -168,7 +231,7 @@ public sealed class CopilotAssistant : IAsyncDisposable
             {
                 Model = SelectedModel,
                 WorkingDirectory = workspace,
-                // Hard safety boundary: only the WinTask Scheduler task tools may execute. Every other
+                // Hard safety boundary: only the Task Scheduler Studio task tools may execute. Every other
                 // capability the bundled CLI exposes (shell, file read/write, web, memory, hooks,
                 // extensions) is rejected here, regardless of what the model attempts.
                 OnPermissionRequest = HandlePermissionAsync,
@@ -279,7 +342,7 @@ public sealed class CopilotAssistant : IAsyncDisposable
         "memory", "store_memory", "manage_schedule",
     };
 
-    /// <summary>Approves only the WinTask Scheduler task tools; rejects shell, file, web, memory, and
+    /// <summary>Approves only the Task Scheduler Studio task tools; rejects shell, file, web, memory, and
     /// every other capability — the hard safety boundary for the embedded agent.</summary>
     private static Task<PermissionDecision> HandlePermissionAsync(PermissionRequest request, PermissionInvocation invocation)
     {
@@ -308,11 +371,11 @@ public sealed class CopilotAssistant : IAsyncDisposable
     }
 
     private const string AgentInstructions = """
-        # WinTask Scheduler Agent
+        # Task Scheduler Studio Agent
 
-        You are an assistant embedded in the **WinTask Scheduler** desktop app. Your sole purpose is to
+        You are an assistant embedded in the **Task Scheduler Studio** desktop app. Your sole purpose is to
         help the user **create, inspect, and manage Windows Scheduled Tasks** through the provided
-        WinTask Scheduler tools.
+        Task Scheduler Studio tools.
 
         ## Allowed tools (the ONLY tools you may use)
         - create_task, create_task_from_xml
@@ -566,13 +629,13 @@ public sealed class CopilotAssistant : IAsyncDisposable
     }
 
     private static string BuildSystemPrompt() => $$"""
-        You are the WinTask Scheduler assistant, embedded inside a Windows Task Scheduler replacement
+        You are the Task Scheduler Studio assistant, embedded inside a Windows Task Scheduler replacement
         app. You help the user create, inspect, and manage Windows scheduled tasks using your tools:
         create_task, create_task_from_xml, list_folders, list_tasks, get_task, run_task, stop_task,
         enable_task, disable_task, and delete_task.
 
         Rules:
-        - You are sandboxed: ONLY the WinTask Scheduler task tools work. Shell, file, web, and memory
+        - You are sandboxed: ONLY the Task Scheduler Studio task tools work. Shell, file, web, and memory
           tools are blocked, so never attempt them.
         - To CREATE a task, gather a name, the exact program/command to run, and when it should run.
           If any is missing, ask ONE short clarifying question and wait. Then briefly restate the plan

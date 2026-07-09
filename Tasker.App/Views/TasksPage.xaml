@@ -47,6 +47,7 @@
                     Height="32"
                     Padding="0"
                     AutomationProperties.AutomationId="NewFolderButton"
+                    AutomationProperties.Name="New folder"
                     Background="Transparent"
                     BorderThickness="0"
                     Click="NewFolder_Click"
@@ -59,6 +60,7 @@
                     Height="32"
                     Padding="0"
                     AutomationProperties.AutomationId="DeleteFolderButton"
+                    AutomationProperties.Name="Delete selected folder"
                     Background="Transparent"
                     BorderThickness="0"
                     Click="DeleteFolder_Click"
@@ -71,6 +73,7 @@
                     Height="32"
                     Padding="0"
                     AutomationProperties.AutomationId="CollapseFoldersButton"
+                    AutomationProperties.Name="Hide folder pane"
                     Background="Transparent"
                     BorderThickness="0"
                     Command="{x:Bind ViewModel.ToggleFolderPaneCommand}"
@@ -212,6 +215,11 @@
                                         <FontIcon Glyph="&#xE8FD;" />
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
+                                <MenuFlyoutItem AutomationProperties.AutomationId="DesignVisually" Click="DesignVisually_Click" Text="Design visually">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE9D9;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
                                 <MenuFlyoutSeparator />
                                 <MenuFlyoutItem AutomationProperties.AutomationId="NewBlankTask" Click="NewTask_Click" Text="Blank task">
                                     <MenuFlyoutItem.Icon>
@@ -226,13 +234,13 @@
                             </MenuFlyout>
                         </DropDownButton.Flyout>
                     </DropDownButton>
-                    <Button AutomationProperties.AutomationId="ImportButton" Click="Import_Click" ToolTipService.ToolTip="Import task from XML">
+                    <Button AutomationProperties.AutomationId="ImportButton" AutomationProperties.Name="Import task from XML" Click="Import_Click" ToolTipService.ToolTip="Import task from XML">
                         <FontIcon FontSize="14" Glyph="&#xE8E5;" />
                     </Button>
-                    <Button AutomationProperties.AutomationId="RefreshButton" Command="{x:Bind ViewModel.RefreshCommand}" ToolTipService.ToolTip="Refresh">
+                    <Button AutomationProperties.AutomationId="RefreshButton" AutomationProperties.Name="Refresh" Command="{x:Bind ViewModel.RefreshCommand}" ToolTipService.ToolTip="Refresh">
                         <FontIcon FontSize="14" Glyph="&#xE72C;" />
                     </Button>
-                    <Button AutomationProperties.AutomationId="MoreButton" ToolTipService.ToolTip="More">
+                    <Button AutomationProperties.AutomationId="MoreButton" AutomationProperties.Name="More" ToolTipService.ToolTip="More">
                         <FontIcon FontSize="14" Glyph="&#xE712;" />
                         <Button.Flyout>
                             <MenuFlyout Placement="Bottom">
@@ -265,6 +273,8 @@
             <Grid Grid.Row="1" ColumnSpacing="12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
@@ -273,8 +283,24 @@
                     AutomationProperties.AutomationId="IncludeSubfoldersCheck"
                     Content="Include subfolders"
                     IsChecked="{x:Bind ViewModel.IncludeSubfolders, Mode=TwoWay}" />
-                <StackPanel
+                <ComboBox
+                    Grid.Column="1"
+                    MinWidth="160"
+                    AutomationProperties.AutomationId="ProcessFilterCombo"
+                    AutomationProperties.Name="Filter by process"
+                    ItemsSource="{x:Bind ViewModel.AvailableProcesses}"
+                    SelectedItem="{x:Bind ViewModel.ProcessFilter, Mode=TwoWay}"
+                    ToolTipService.ToolTip="Filter by process" />
+                <ComboBox
                     Grid.Column="2"
+                    MinWidth="140"
+                    AutomationProperties.AutomationId="StatusFilterCombo"
+                    AutomationProperties.Name="Filter by status"
+                    ItemsSource="{x:Bind ViewModel.Statuses}"
+                    SelectedItem="{x:Bind ViewModel.StatusFilter, Mode=TwoWay}"
+                    ToolTipService.ToolTip="Filter by status" />
+                <StackPanel
+                    Grid.Column="4"
                     Orientation="Horizontal"
                     Spacing="8"
                     VerticalAlignment="Center"
@@ -287,6 +313,7 @@
                     <Button AutomationProperties.AutomationId="BulkRunButton" Command="{x:Bind ViewModel.RunSelectedCommand}" Content="Run" />
                     <Button AutomationProperties.AutomationId="BulkEnableButton" Command="{x:Bind ViewModel.EnableSelectedCommand}" Content="Enable" />
                     <Button AutomationProperties.AutomationId="BulkDisableButton" Command="{x:Bind ViewModel.DisableSelectedCommand}" Content="Disable" />
+                    <Button AutomationProperties.AutomationId="BulkMoveButton" Click="BulkMove_Click" Content="Move&#x2026;" />
                     <Button AutomationProperties.AutomationId="BulkDeleteButton" Click="BulkDelete_Click" Content="Delete" />
                 </StackPanel>
             </Grid>
@@ -384,9 +411,19 @@
                                         <FontIcon Glyph="&#xE70F;" />
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
+                                <MenuFlyoutItem Click="EditInDesigner_Click" Text="Open in designer&#x2026;">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE9D9;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
                                 <MenuFlyoutItem Click="Duplicate_Click" Text="Duplicate">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon Glyph="&#xE8C8;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Click="Move_Click" Text="Move to folder&#x2026;">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE8DE;" />
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
                                 <MenuFlyoutItem Click="Export_Click" Text="Export to XML&#x2026;">
@@ -495,10 +532,10 @@
                                 TextTrimming="CharacterEllipsis" />
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                            <Button AutomationProperties.AutomationId="RunButton" Command="{x:Bind ViewModel.RunCommand}" ToolTipService.ToolTip="Run now">
+                            <Button AutomationProperties.AutomationId="RunButton" AutomationProperties.Name="Run now" Command="{x:Bind ViewModel.RunCommand}" ToolTipService.ToolTip="Run now">
                                 <FontIcon FontSize="14" Glyph="&#xE768;" />
                             </Button>
-                            <Button AutomationProperties.AutomationId="StopButton" Command="{x:Bind ViewModel.StopCommand}" ToolTipService.ToolTip="End">
+                            <Button AutomationProperties.AutomationId="StopButton" AutomationProperties.Name="End" Command="{x:Bind ViewModel.StopCommand}" ToolTipService.ToolTip="End">
                                 <FontIcon FontSize="14" Glyph="&#xE71A;" />
                             </Button>
                             <Button AutomationProperties.AutomationId="ToggleEnabledButton" Command="{x:Bind ViewModel.ToggleEnabledCommand}">
@@ -513,13 +550,19 @@
                                     <TextBlock Text="Edit" />
                                 </StackPanel>
                             </Button>
-                            <Button AutomationProperties.AutomationId="DuplicateButton" Click="Duplicate_Click" ToolTipService.ToolTip="Duplicate">
+                            <Button AutomationProperties.AutomationId="DesignButton" AutomationProperties.Name="Open in the visual designer" Click="EditInDesigner_Click" ToolTipService.ToolTip="Open in the visual designer">
+                                <FontIcon FontSize="14" Glyph="&#xE9D9;" />
+                            </Button>
+                            <Button AutomationProperties.AutomationId="DuplicateButton" AutomationProperties.Name="Duplicate" Click="Duplicate_Click" ToolTipService.ToolTip="Duplicate">
                                 <FontIcon FontSize="14" Glyph="&#xE8C8;" />
                             </Button>
-                            <Button AutomationProperties.AutomationId="ExportButton" Click="Export_Click" ToolTipService.ToolTip="Export to XML">
+                            <Button AutomationProperties.AutomationId="MoveButton" AutomationProperties.Name="Move to folder" Click="Move_Click" ToolTipService.ToolTip="Move to folder">
+                                <FontIcon FontSize="14" Glyph="&#xE8DE;" />
+                            </Button>
+                            <Button AutomationProperties.AutomationId="ExportButton" AutomationProperties.Name="Export to XML" Click="Export_Click" ToolTipService.ToolTip="Export to XML">
                                 <FontIcon FontSize="14" Glyph="&#xEDE1;" />
                             </Button>
-                            <Button AutomationProperties.AutomationId="DeleteButton" Click="Delete_Click" ToolTipService.ToolTip="Delete">
+                            <Button AutomationProperties.AutomationId="DeleteButton" AutomationProperties.Name="Delete" Click="Delete_Click" ToolTipService.ToolTip="Delete">
                                 <FontIcon FontSize="14" Glyph="&#xE74D;" Foreground="{ThemeResource SystemFillColorCriticalBrush}" />
                             </Button>
                         </StackPanel>

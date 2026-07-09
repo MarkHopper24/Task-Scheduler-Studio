@@ -11,6 +11,15 @@ public partial class RunningPageViewModel : ObservableObject
 {
     public ObservableCollection<RunningTaskDto> Running { get; } = new();
 
+    public const string AllProcesses = "All processes";
+    public ObservableCollection<string> AvailableProcesses { get; } = new() { AllProcesses };
+
+    [ObservableProperty]
+    public partial string ProcessFilter { get; set; } = AllProcesses;
+
+    [ObservableProperty]
+    public partial string SearchText { get; set; } = string.Empty;
+
     [ObservableProperty]
     public partial bool IsBusy { get; set; }
 
@@ -23,7 +32,13 @@ public partial class RunningPageViewModel : ObservableObject
     public bool IsEmpty => Running.Count == 0 && !IsBusy;
     public bool HasSelection => SelectedTask is not null;
 
+    private List<RunningTaskDto> _allRunning = new();
+
     partial void OnSelectedTaskChanged(RunningTaskDto? value) => OnPropertyChanged(nameof(HasSelection));
+
+    partial void OnProcessFilterChanged(string value) => ApplyFilter();
+
+    partial void OnSearchTextChanged(string value) => ApplyFilter();
 
     [RelayCommand]
     public async Task RefreshAsync()
@@ -35,9 +50,9 @@ public partial class RunningPageViewModel : ObservableObject
             var list = await TaskerClient.GetRunningTasksAsync();
             if (Services.AppSettings.OnlyTaskerTasks)
                 list = list.Where(r => r.CreatedByTasker).ToList();
-            Running.Clear();
-            foreach (var r in list) Running.Add(r);
-            StatusMessage = $"{Running.Count} task(s) running";
+            _allRunning = list;
+            RebuildAvailableProcesses();
+            ApplyFilter();
         }
         catch (Exception ex)
         {
@@ -48,6 +63,44 @@ public partial class RunningPageViewModel : ObservableObject
             IsBusy = false;
             OnPropertyChanged(nameof(IsEmpty));
         }
+    }
+
+    private void ApplyFilter()
+    {
+        IEnumerable<RunningTaskDto> view = _allRunning;
+
+        if (!string.IsNullOrEmpty(ProcessFilter) && ProcessFilter != AllProcesses)
+            view = view.Where(r => string.Equals(r.ProcessName, ProcessFilter, StringComparison.OrdinalIgnoreCase));
+
+        var q = SearchText?.Trim();
+        if (!string.IsNullOrEmpty(q))
+        {
+            view = view.Where(r =>
+                r.Name.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                r.Path.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                r.CurrentAction.Contains(q, StringComparison.OrdinalIgnoreCase));
+        }
+
+        Running.Clear();
+        foreach (var r in view) Running.Add(r);
+        StatusMessage = $"{Running.Count} task(s) running";
+        OnPropertyChanged(nameof(IsEmpty));
+    }
+
+    private void RebuildAvailableProcesses()
+    {
+        var current = ProcessFilter;
+        var names = _allRunning
+            .Select(r => r.ProcessName)
+            .Where(p => !string.IsNullOrEmpty(p))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(p => p, StringComparer.OrdinalIgnoreCase);
+
+        AvailableProcesses.Clear();
+        AvailableProcesses.Add(AllProcesses);
+        foreach (var n in names) AvailableProcesses.Add(n);
+
+        ProcessFilter = AvailableProcesses.Contains(current) ? current : AllProcesses;
     }
 
     [RelayCommand]

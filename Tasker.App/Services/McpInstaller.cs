@@ -6,7 +6,7 @@ using Tasker.Core;
 namespace Tasker_App.Services;
 
 /// <summary>
-/// Installs the bundled WinTask Scheduler MCP server into the GitHub Copilot CLI and VS Code MCP
+/// Installs the bundled Task Scheduler Studio MCP server into the GitHub Copilot CLI and VS Code MCP
 /// configurations by merging an entry into the right config file (preserving any existing servers).
 /// </summary>
 public static class McpInstaller

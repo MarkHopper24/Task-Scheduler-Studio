@@ -87,7 +87,9 @@ public static class TaskRecipes
             return new RecipeResult
             {
                 Command = PowerShell,
-                Arguments = $"-NoProfile -WindowStyle Hidden -Command \"{script}\"",
+                // -EncodedCommand (base64 UTF-16LE) so a title/message containing a double-quote
+                // can't break the outer -Command "…" quoting and silently fail the task at runtime.
+                Arguments = $"-NoProfile -WindowStyle Hidden -EncodedCommand {EncodePs(script)}",
                 Description = "Shows a reminder pop-up message.",
                 SuggestedName = "Reminder",
                 PlainSummary = $"Show a pop-up titled \u201C{f.GetValueOrDefault("title", "Reminder")}\u201D saying \u201C{f.GetValueOrDefault("message", "")}\u201D.",
@@ -362,6 +364,11 @@ public static class TaskRecipes
 
     /// <summary>Escapes a value for safe insertion into a single-quoted PowerShell string.</summary>
     private static string Ps(string? value) => (value ?? string.Empty).Replace("'", "''");
+
+    /// <summary>Base64-encodes a PowerShell script for powershell.exe -EncodedCommand (UTF-16LE,
+    /// as PowerShell requires), so free-text user input can't break command-line quoting.</summary>
+    private static string EncodePs(string script) =>
+        Convert.ToBase64String(System.Text.Encoding.Unicode.GetBytes(script));
 
     private static int ParseInt(string? s, int dflt) => int.TryParse(s, out var v) ? v : dflt;
 

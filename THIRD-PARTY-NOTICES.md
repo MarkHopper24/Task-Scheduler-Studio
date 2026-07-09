@@ -1,6 +1,6 @@
 # Third-Party Notices
 
-WinTask Scheduler's own source code is licensed under the MIT License (see
+Task Scheduler Studio's own source code is licensed under the MIT License (see
 [`LICENSE`](LICENSE)). The application uses the third-party components listed
 below, each under its own license. This file is provided for attribution and
 license compliance; the full license text for each component ships with its
@@ -24,6 +24,6 @@ package (via NuGet) and at the linked source.
 - The **Windows App SDK** and **Windows SDK build tools** are Microsoft components
   governed by Microsoft's license terms. Those terms explicitly permit
   redistributing the Windows App SDK runtime as part of applications you develop,
-  which is how the self-contained WinTask Scheduler package distributes it.
+  which is how the self-contained Task Scheduler Studio package distributes it.
 - This list reflects the direct package references at the time of writing.
   Transitive dependencies retain their own (also permissive) licenses.

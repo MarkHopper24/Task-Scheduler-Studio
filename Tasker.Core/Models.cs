@@ -65,7 +65,15 @@ public sealed class TaskSummaryDto
     /// <summary>RegistrationInfo &lt;Source&gt;. Tasks created/managed by this app stamp it with
     /// <see cref="TaskerService.AppSource"/> so they can be filtered apart from other tasks.</summary>
     public string Source { get; set; } = string.Empty;
-    public bool CreatedByTasker => string.Equals(Source, TaskerService.AppSource, StringComparison.OrdinalIgnoreCase);
+    public bool CreatedByTasker => TaskerService.IsAppSource(Source);
+    /// <summary>File name (e.g. "powershell.exe") of the task's first "run a program" action, used
+    /// to filter the task list by the process it launches. Empty for tasks with no exec action
+    /// (COM handler, e-mail, etc.).</summary>
+    public string ProcessName { get; set; } = string.Empty;
+
+    // Drives the accessible name of a ListView row container (screen readers would otherwise
+    // announce the class name).
+    public override string ToString() => Name;
 }
 
 /// <summary>A single trigger in structured, editable form.</summary>
@@ -160,9 +168,15 @@ public sealed class RunningTaskDto
     public string CurrentAction { get; set; } = string.Empty;
     public uint EnginePid { get; set; }
     public TaskRunState State { get; set; }
-    /// <summary>RegistrationInfo &lt;Source&gt;; "WinTask Scheduler" for tasks created by this app.</summary>
+    /// <summary>RegistrationInfo &lt;Source&gt;; <see cref="TaskerService.AppSource"/> for tasks created by this app.</summary>
     public string Source { get; set; } = string.Empty;
-    public bool CreatedByTasker => string.Equals(Source, TaskerService.AppSource, StringComparison.OrdinalIgnoreCase);
+    public bool CreatedByTasker => TaskerService.IsAppSource(Source);
+    /// <summary>File name (e.g. "powershell.exe") extracted from <see cref="CurrentAction"/>, used
+    /// to filter the running-tasks list by process.</summary>
+    public string ProcessName { get; set; } = string.Empty;
+
+    // Accessible name for a ListView row container (avoids announcing the class name).
+    public override string ToString() => Name;
 }
 
 /// <summary>A single entry from the Task Scheduler operational event log for a task.</summary>

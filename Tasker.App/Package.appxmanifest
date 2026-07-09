@@ -11,12 +11,12 @@
   <Identity
     Name="53383MarkHopper.WindowsTasker"
     Publisher="CN=ADA72B16-B88A-4477-94E0-44F1442A4EAE"
-    Version="1.0.3.0" />
+    Version="1.0.4.0" />
 
   <mp:PhoneIdentity PhoneProductId="0FFB5D38-E958-44ED-A4EF-43D4577695AD" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>WinTask Scheduler</DisplayName>
+    <DisplayName>Task Scheduler Studio</DisplayName>
     <PublisherDisplayName>Mark Hopper</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
@@ -35,7 +35,7 @@
       Executable="$targetnametoken$.exe"
       EntryPoint="$targetentrypoint$">
       <uap:VisualElements
-        DisplayName="WinTask Scheduler"
+        DisplayName="Task Scheduler Studio"
         Description="A modern take on Windows Task Scheduler"
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.png"
@@ -48,7 +48,7 @@
           <uap5:StartupTask
             TaskId="WinTaskSchedulerStartup"
             Enabled="false"
-            DisplayName="WinTask Scheduler" />
+            DisplayName="Task Scheduler Studio" />
         </uap5:Extension>
         <!--
           Expose the bundled MCP server under a stable app-execution alias. External MCP clients

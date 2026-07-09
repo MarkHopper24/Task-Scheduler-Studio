@@ -13,8 +13,23 @@ namespace Tasker.Core;
 public sealed class TaskerService : IDisposable
 {
     /// <summary>Stamped into each created/updated task's RegistrationInfo &lt;Source&gt; so tasks
-    /// originating from this app (UI or MCP) can be told apart from other Task Scheduler tasks.</summary>
-    public const string AppSource = "WinTask Scheduler";
+    /// originating from this app (UI or MCP) can be told apart from other Task Scheduler tasks.
+    /// This is the app's current product name; see <see cref="IsAppSource"/> for matching tasks
+    /// stamped by earlier versions under a previous name.</summary>
+    public const string AppSource = "Task Scheduler Studio";
+
+    /// <summary>Previous product name(s) this app was stamped with, kept only so tasks created by
+    /// earlier versions still count as "created by this app" after a rename. Never stamp new tasks
+    /// with these; use <see cref="AppSource"/>.</summary>
+    private static readonly string[] LegacyAppSources = { "Windows Task Studio", "WinTask Scheduler" };
+
+    /// <summary>True if <paramref name="source"/> matches this app's current <see cref="AppSource"/>
+    /// or any <see cref="LegacyAppSources"/>, so tasks stamped by earlier versions (under a previous
+    /// product name) still count as "created by this app" going forward.</summary>
+    public static bool IsAppSource(string? source) =>
+        source is not null &&
+        (string.Equals(source, AppSource, StringComparison.OrdinalIgnoreCase)
+         || LegacyAppSources.Any(legacy => string.Equals(source, legacy, StringComparison.OrdinalIgnoreCase)));
 
     private readonly TaskService _ts;
 
@@ -145,11 +160,11 @@ public sealed class TaskerService : IDisposable
             Name = t.Name,
             Path = t.Path,
             Folder = ParentFolder(t.Path),
-            Enabled = SafeGet(() => t.Enabled, false),
+            Enabled = SafeGet(() => t.Enabled, true),
             State = (TaskRunState)(int)SafeGet(() => t.State, TaskState.Unknown),
             LastRunTime = SafeDate(() => t.LastRunTime),
             NextRunTime = SafeDate(() => t.NextRunTime),
-            LastTaskResult = SafeGet(() => (long)t.LastTaskResult, 0L),
+            LastTaskResult = SafeGet(() => (long)(uint)t.LastTaskResult, 0L),
         };
         dto.LastResultText = DescribeResult(dto.LastTaskResult);
         try
@@ -160,6 +175,8 @@ public sealed class TaskerService : IDisposable
             dto.Source = def.RegistrationInfo.Source ?? string.Empty;
             dto.TriggersSummary = string.Join("; ", SummarizeTriggers(def));
             dto.ActionsSummary = string.Join("; ", SummarizeActions(def));
+            var exec = def.Actions.OfType<ExecAction>().FirstOrDefault();
+            if (exec is not null) dto.ProcessName = ExtractProcessName(exec.Path);
         }
         catch { /* some protected tasks throw on Definition */ }
         return dto;
@@ -185,7 +202,7 @@ public sealed class TaskerService : IDisposable
             State = (TaskRunState)(int)SafeGet(() => t.State, TaskState.Unknown),
             LastRunTime = SafeDate(() => t.LastRunTime),
             NextRunTime = SafeDate(() => t.NextRunTime),
-            LastTaskResult = SafeGet(() => (long)t.LastTaskResult, 0L),
+            LastTaskResult = SafeGet(() => (long)(uint)t.LastTaskResult, 0L),
             MissedRuns = SafeGet(() => t.NumberOfMissedRuns, 0),
             Xml = SafeGet(() => t.Xml, string.Empty),
         };
@@ -260,8 +277,9 @@ public sealed class TaskerService : IDisposable
     /// <summary>Registers a task from raw Task Scheduler XML (full fidelity, cross-app safe).</summary>
     /// <param name="stampSource">When true (the default), the task's RegistrationInfo &lt;Source&gt;
     /// is stamped with <see cref="AppSource"/> so raw-XML/AI-created tasks are marked as created by
-    /// this app — matching the structured create path — and pass the "only WinTask Scheduler tasks"
-    /// filter. Backup <em>restore</em> passes false to preserve each task's original source.</param>
+    /// this app, matching the structured create path, and pass the "only this app's tasks"
+    /// filter (see <see cref="IsAppSource"/>). Backup <em>restore</em> passes false to preserve each
+    /// task's original source.</param>
     public OperationResult ImportXml(string folderPath, string name, string xml, string? userId = null, string? password = null, bool stampSource = true)
     {
         try
@@ -375,6 +393,7 @@ public sealed class TaskerService : IDisposable
                     EnginePid = SafeGet(() => rt.EnginePID, 0u),
                     State = (TaskRunState)(int)SafeGet(() => rt.State, TaskState.Unknown),
                     Source = SafeGet(() => rt.Definition.RegistrationInfo.Source ?? string.Empty, string.Empty),
+                    ProcessName = ExtractProcessName(SafeGet(() => rt.CurrentAction, string.Empty)),
                 });
             }
         }
@@ -717,7 +736,9 @@ public sealed class TaskerService : IDisposable
             TriggerKind.OneTime => new TimeTrigger { StartBoundary = dto.StartBoundary ?? DateTime.Now },
             TriggerKind.Daily => new DailyTrigger((short)Math.Max(1, dto.DaysInterval))
             { StartBoundary = dto.StartBoundary ?? DateTime.Now },
-            TriggerKind.Weekly => new WeeklyTrigger(JoinDays(dto.DaysOfWeek), (short)Math.Max(1, dto.WeeksInterval))
+            TriggerKind.Weekly => new WeeklyTrigger(
+                dto.DaysOfWeek.Count > 0 ? JoinDays(dto.DaysOfWeek) : StartDayFlag(dto.StartBoundary),
+                (short)Math.Max(1, dto.WeeksInterval))
             { StartBoundary = dto.StartBoundary ?? DateTime.Now },
             TriggerKind.Monthly => new MonthlyTrigger
             {
@@ -729,9 +750,9 @@ public sealed class TaskerService : IDisposable
             TriggerKind.MonthlyDOW => new MonthlyDOWTrigger
             {
                 StartBoundary = dto.StartBoundary ?? DateTime.Now,
-                DaysOfWeek = JoinDays(dto.DaysOfWeek),
+                DaysOfWeek = dto.DaysOfWeek.Count > 0 ? JoinDays(dto.DaysOfWeek) : StartDayFlag(dto.StartBoundary),
                 MonthsOfYear = JoinMonths(dto.MonthsOfYear),
-                WeeksOfMonth = JoinWeeks(dto.WeeksOfMonth),
+                WeeksOfMonth = dto.WeeksOfMonth.Count > 0 ? JoinWeeks(dto.WeeksOfMonth) : StartWeekFlag(dto.StartBoundary),
                 RunOnLastWeekOfMonth = dto.RunOnLastWeek,
             },
             TriggerKind.AtStartup => new BootTrigger(),
@@ -810,6 +831,36 @@ public sealed class TaskerService : IDisposable
         ShowMessageAction => "Show message (deprecated)",
         _ => ac.ActionType.ToString(),
     };
+
+    /// <summary>Extracts the process file name (e.g. "powershell.exe") from an exec action's path
+    /// or a running task's <c>CurrentAction</c> string, tolerating quoted paths, environment
+    /// variables, and bare command names. Returns empty for anything that isn't a runnable path.</summary>
+    private static string ExtractProcessName(string? commandOrPath)
+    {
+        if (string.IsNullOrWhiteSpace(commandOrPath)) return string.Empty;
+        var s = commandOrPath.Trim();
+
+        // A leading quote wraps just the executable path; otherwise take the first whitespace-
+        // delimited token so trailing arguments (only present in ActionsSummary-style strings)
+        // don't leak into the result.
+        if (s.Length > 0 && s[0] == '"')
+        {
+            var close = s.IndexOf('"', 1);
+            s = close > 1 ? s[1..close] : s[1..];
+        }
+        else
+        {
+            var space = s.IndexOf(' ');
+            if (space > 0) s = s[..space];
+        }
+
+        try
+        {
+            var name = System.IO.Path.GetFileName(Environment.ExpandEnvironmentVariables(s));
+            return string.IsNullOrWhiteSpace(name) ? string.Empty : name;
+        }
+        catch { return string.Empty; }
+    }
 
     // ---------------------------------------------------------------- Helpers
 
@@ -898,6 +949,31 @@ public sealed class TaskerService : IDisposable
             if (Enum.TryParse<WhichWeek>(n, true, out var w)) result |= w;
         return result == 0 ? WhichWeek.FirstWeek : result;
     }
+
+    /// <summary>The single day-of-week flag for a trigger's start date. Used as a safe default for a
+    /// weekly / monthly-by-weekday trigger that arrived with no explicit days, so it runs weekly on
+    /// its start day instead of silently becoming an every-day trigger (which <see cref="JoinDays"/>'s
+    /// AllDays fallback would otherwise cause).</summary>
+    private static DaysOfTheWeek StartDayFlag(DateTime? start) => (start ?? DateTime.Now).DayOfWeek switch
+    {
+        DayOfWeek.Sunday => DaysOfTheWeek.Sunday,
+        DayOfWeek.Monday => DaysOfTheWeek.Monday,
+        DayOfWeek.Tuesday => DaysOfTheWeek.Tuesday,
+        DayOfWeek.Wednesday => DaysOfTheWeek.Wednesday,
+        DayOfWeek.Thursday => DaysOfTheWeek.Thursday,
+        DayOfWeek.Friday => DaysOfTheWeek.Friday,
+        _ => DaysOfTheWeek.Saturday,
+    };
+
+    /// <summary>The which-week-of-the-month flag containing a trigger's start date; a safe default
+    /// for a monthly-by-weekday trigger that arrived with no explicit weeks.</summary>
+    private static WhichWeek StartWeekFlag(DateTime? start) => (start ?? DateTime.Now).Day switch
+    {
+        <= 7 => WhichWeek.FirstWeek,
+        <= 14 => WhichWeek.SecondWeek,
+        <= 21 => WhichWeek.ThirdWeek,
+        _ => WhichWeek.FourthWeek,
+    };
 
     private static TaskSessionStateChangeType ParseStateChange(string? s) =>
         Enum.TryParse<TaskSessionStateChangeType>(s, true, out var v) ? v : TaskSessionStateChangeType.ConsoleConnect;

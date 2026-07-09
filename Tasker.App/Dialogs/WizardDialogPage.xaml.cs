@@ -11,29 +11,41 @@ namespace Tasker_App.Dialogs;
 /// A friendly, step-by-step task creation wizard for non-technical users. Deterministic and
 /// template-driven (no AI): the user picks a ready-made recipe, fills in plain-language fields,
 /// chooses a simple schedule, reviews a plain-English summary, and the wizard builds the task.
+/// Hosted as the <c>Content</c> of a plain <see cref="ContentDialog"/> built by the caller (see
+/// <c>TasksPage.GuidedSetup_Click</c>); call <see cref="Attach"/> once, right after construction,
+/// so step navigation can drive that dialog's button bar.
 /// </summary>
-public sealed partial class WizardDialog : ContentDialog
+public sealed partial class WizardDialogPage : Page
 {
     public WizardViewModel ViewModel { get; } = new();
 
     public bool Created { get; private set; }
     public OperationResult? LastResult { get; private set; }
 
+    private ContentDialog? _dialog;
     private int _step;                                  // 0 choose, 1 details, 2 schedule, 3 review
     private readonly Dictionary<string, FrameworkElement> _fieldControls = new();
+    private TaskRecipe? _fieldsBuiltFor;                 // recipe the current field controls belong to
     private static readonly string[] StepTitles =
         { "Choose what to do", "Fill in the details", "Choose when it runs", "Review and create" };
 
-    public WizardDialog(string? defaultFolder = null)
+    public WizardDialogPage(string? defaultFolder = null)
     {
         InitializeComponent();
         if (!string.IsNullOrEmpty(defaultFolder)) ViewModel.Folder = defaultFolder!;
-        UpdateStep();
     }
 
     public void SetFolders(IEnumerable<string> folders)
     {
         WizFolder.ItemsSource = folders.ToList();
+    }
+
+    /// <summary>Wires this page to its hosting ContentDialog so step navigation can drive the
+    /// dialog's title/button bar, then renders the initial step. Call once, before ShowAsync.</summary>
+    public void Attach(ContentDialog dialog)
+    {
+        _dialog = dialog;
+        UpdateStep();
     }
 
     // ---------------------------------------------------------------- step flow
@@ -48,10 +60,11 @@ public sealed partial class WizardDialog : ContentDialog
         StepLabel.Text = $"Step {_step + 1} of 4: {StepTitles[_step]}";
         StepProgress.Value = _step + 1;
 
-        SecondaryButtonText = _step == 0 ? string.Empty : "Back";
-        IsSecondaryButtonEnabled = _step > 0;
-        PrimaryButtonText = _step == 3 ? "Create task" : "Next";
-        IsPrimaryButtonEnabled = !(_step == 0 && ViewModel.SelectedRecipe is null);
+        if (_dialog is null) return;
+        _dialog.SecondaryButtonText = _step == 0 ? string.Empty : "Back";
+        _dialog.IsSecondaryButtonEnabled = _step > 0;
+        _dialog.PrimaryButtonText = _step == 3 ? "Create task" : "Next";
+        _dialog.IsPrimaryButtonEnabled = !(_step == 0 && ViewModel.SelectedRecipe is null);
     }
 
     private void Recipe_ItemClick(object sender, ItemClickEventArgs e)
@@ -67,13 +80,13 @@ public sealed partial class WizardDialog : ContentDialog
         }
     }
 
-    private void OnSecondary(ContentDialog sender, ContentDialogButtonClickEventArgs args)
+    public void OnSecondary(ContentDialog sender, ContentDialogButtonClickEventArgs args)
     {
         args.Cancel = true; // never close on Back
         if (_step > 0) { _step--; UpdateStep(); }
     }
 
-    private async void OnPrimary(ContentDialog sender, ContentDialogButtonClickEventArgs args)
+    public async void OnPrimary(ContentDialog sender, ContentDialogButtonClickEventArgs args)
     {
         // Advance through steps; only the final step actually creates and closes.
         if (_step < 3)
@@ -140,6 +153,13 @@ public sealed partial class WizardDialog : ContentDialog
         DetailGlyph.Glyph = recipe.Glyph;
         DetailTitle.Text = recipe.Title;
         DetailDescription.Text = recipe.Description;
+
+        // Preserve the user's entries if the fields are already built for this recipe (e.g. they
+        // pressed Back to step 0 then Next again). Only rebuild when the recipe actually changed,
+        // otherwise the controls would be recreated with their defaults and typed input lost.
+        if (ReferenceEquals(_fieldsBuiltFor, recipe) && _fieldControls.Count > 0)
+            return;
+        _fieldsBuiltFor = recipe;
 
         FieldsPanel.Children.Clear();
         _fieldControls.Clear();
