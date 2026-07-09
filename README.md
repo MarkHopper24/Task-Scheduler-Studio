@@ -1,12 +1,16 @@
 <h1 align="center">
   <img src="WinTask%20Logo.png" alt="Task Scheduler Studio" height="60"><br>
-  Task Scheduler Studio
+  <a href="https://apps.microsoft.com/detail/9n0fv2hzxkjg">Task Scheduler Studio</a>
 </h1>
 
 <h4 align="center">A modern, Fluent WinUI 3 reimagining of Windows Task Scheduler, with natural-language task creation and a local MCP server for AI agents.</h4>
-
+<p align="center"> 
+  <a href="https://apps.microsoft.com/detail/9n0fv2hzxkjg?referrer=appbadge&mode=full" target="_blank"  rel="noopener noreferrer">
+	<img src="https://get.microsoft.com/images/en-us%20dark.svg" width="200"/></a>
+</p>
 <p align="center">
-  <a href="#overview">Overview</a> •
+    <a href="#overview">Overview</a> •
+  <a href="#installation">Installation</a> •
   <a href="#solution-layout">Solution layout</a> •
   <a href="#script-library">Script library</a> •
   <a href="#build--run">Build &amp; run</a> •
@@ -14,7 +18,10 @@
   <a href="#license">License</a>
 </p>
 
+---
+
 ![Tasks](screenshots/01-tasks.png)
+
 
 ## Overview
 
@@ -28,6 +35,21 @@ The app pairs that engine with a clean Fluent interface and, optionally, AI. A b
 > are the developer's own.
 
 <sub>This project was built with the help of AI coding tools (GitHub Copilot).</sub>
+
+## Installation
+Method 1: Directly from the Microsoft Store [HERE](https://apps.microsoft.com/detail/9N0FV2HZXKJG)
+
+Method 2: Downloading and installing the Store MSIX package directly from the latest GitHub release [HERE](https://github.com/MarkHopper24/Task-Scheduler-Studio/releases/latest) 
+
+Method 3: From Windows Package Manager using winget via command line
+```
+winget install "Task Scheduler Studio" --source msstore
+```
+
+For now, WinTask Scheduler requires an internet connection on installation for license acquisition through the Microsoft Store (this includes the build hosted in this repository). After first installation, it can be used fully offline.
+
+Method 4: Building the solution on your own in Visual Studio using the provided source code (this method does not require a network connection).
+
 
 ## Why it's cross‑compatible
 
