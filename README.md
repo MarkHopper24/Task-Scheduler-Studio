@@ -1,6 +1,6 @@
 <h1 align="center">
-  <img src="WinTask%20Logo.png" alt="Task Scheduler Studio" height="60"><br>
-  <a href="https://apps.microsoft.com/detail/9n0fv2hzxkjg">Task Scheduler Studio</a>
+  <a href="https://apps.microsoft.com/detail/9N0FV2HZXKJG"><img src="WinTask%20Logo.png" alt="Task Scheduler Studio" height="60"><br></a>
+  Task Scheduler Studio
 </h1>
 
 <h4 align="center">A modern, Fluent WinUI 3 reimagining of Windows Task Scheduler, with natural-language task creation and a local MCP server for AI agents.</h4>
