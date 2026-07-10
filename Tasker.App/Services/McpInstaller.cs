@@ -14,7 +14,7 @@ public static class McpInstaller
     public const string ServerName = "wintask-scheduler";
 
     public static string McpExePath => CopilotAssistant.McpExePath;
-    public static bool McpAvailable => File.Exists(McpExePath);
+    public static bool McpAvailable => CopilotAssistant.McpAvailable;
 
     /// <summary>The command written into external MCP client configs: a stable app-execution alias
     /// when installed, or the absolute server path for unpackaged dev runs.</summary>

@@ -100,7 +100,7 @@ public sealed class CopilotAssistant : IAsyncDisposable
         catch { return null; }
     }
 
-    public static bool McpAvailable => System.IO.File.Exists(McpExePath);
+    public static bool McpAvailable => HasCompleteMcpDeployment(McpExePath);
 
     /// <summary>Per-user staging folder for the bundled MCP server. The packaged app's real install
     /// location under WindowsApps is protected: Windows Explorer won't browse it, and other
@@ -128,6 +128,34 @@ public sealed class CopilotAssistant : IAsyncDisposable
         "WindowsTasker", "mcp");
 
     private static string StagedMcpExePath => System.IO.Path.Combine(StagedMcpDir, "Tasker.Mcp.exe");
+
+    private static bool HasCompleteMcpDeployment(string executablePath)
+    {
+        var directory = System.IO.Path.GetDirectoryName(executablePath);
+        return !string.IsNullOrEmpty(directory)
+            && System.IO.File.Exists(executablePath)
+            && System.IO.File.Exists(System.IO.Path.Combine(directory, "Tasker.Mcp.dll"))
+            && System.IO.File.Exists(System.IO.Path.Combine(directory, "Tasker.Mcp.deps.json"))
+            && System.IO.File.Exists(System.IO.Path.Combine(directory, "Tasker.Mcp.runtimeconfig.json"));
+    }
+
+    private static bool IsStagedMcpDeploymentCurrent(string sourceDirectory)
+    {
+        var sourceFiles = System.IO.Directory.EnumerateFiles(
+            sourceDirectory,
+            "*",
+            System.IO.SearchOption.AllDirectories).ToArray();
+
+        return sourceFiles.Length > 0
+            && sourceFiles.All(sourceFile =>
+            {
+                var relativePath = System.IO.Path.GetRelativePath(sourceDirectory, sourceFile);
+                var stagedFile = System.IO.Path.Combine(StagedMcpDir, relativePath);
+                return System.IO.File.Exists(stagedFile)
+                    && System.IO.File.GetLastWriteTimeUtc(sourceFile) == System.IO.File.GetLastWriteTimeUtc(stagedFile)
+                    && new System.IO.FileInfo(sourceFile).Length == new System.IO.FileInfo(stagedFile).Length;
+            });
+    }
 
     /// <summary>Serializes staging attempts. <see cref="WarmMcpServerStaging"/> kicks off a
     /// background copy at startup; without this lock, a near-simultaneous synchronous call to <see
@@ -171,18 +199,17 @@ public sealed class CopilotAssistant : IAsyncDisposable
             try
             {
                 var sourceExe = McpExePath;
-                if (!System.IO.File.Exists(sourceExe))
+                if (!HasCompleteMcpDeployment(sourceExe))
                 {
-                    if (System.IO.File.Exists(stagedExe)) return stagedExe;
-                    LastStagingError = $"Bundled server not found at '{sourceExe}'.";
+                    if (HasCompleteMcpDeployment(stagedExe)) return stagedExe;
+                    LastStagingError = $"Bundled server deployment is incomplete at '{sourceExe}'.";
                     return McpAlias;
                 }
 
                 var sourceDir = System.IO.Path.GetDirectoryName(sourceExe)!;
 
-                var upToDate = System.IO.File.Exists(stagedExe)
-                    && System.IO.File.GetLastWriteTimeUtc(sourceExe) == System.IO.File.GetLastWriteTimeUtc(stagedExe)
-                    && new System.IO.FileInfo(sourceExe).Length == new System.IO.FileInfo(stagedExe).Length;
+                var upToDate = HasCompleteMcpDeployment(stagedExe)
+                    && IsStagedMcpDeploymentCurrent(sourceDir);
 
                 if (!upToDate)
                 {
@@ -204,8 +231,8 @@ public sealed class CopilotAssistant : IAsyncDisposable
                         throw new System.IO.IOException($"Enumerating '{sourceDir}' produced no files to stage (possibly blocked directory listing).");
                 }
 
-                if (!System.IO.File.Exists(stagedExe))
-                    throw new System.IO.IOException($"Staging finished without producing '{stagedExe}'.");
+                if (!HasCompleteMcpDeployment(stagedExe))
+                    throw new System.IO.IOException($"Staging finished without producing a complete MCP server deployment at '{StagedMcpDir}'.");
 
                 LastStagingError = null;
                 return stagedExe;
@@ -217,7 +244,7 @@ public sealed class CopilotAssistant : IAsyncDisposable
                 // it's still a normal, directly-reachable file — over the alias, which depends on
                 // PATH/alias-registration quirks the staged copy exists to avoid.
                 LastStagingError = ex.Message;
-                return System.IO.File.Exists(stagedExe) ? stagedExe : McpAlias;
+                return HasCompleteMcpDeployment(stagedExe) ? stagedExe : McpAlias;
             }
         }
     }
