@@ -21,11 +21,13 @@
                 PlaceholderText="C:\Windows\System32\cmd.exe"
                 Text="{x:Bind ViewModel.Command, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             <Button
+                AutomationProperties.AutomationId="BrowseActionFileButton"
                 Grid.Column="1"
                 VerticalAlignment="Bottom"
                 Click="Browse_Click"
                 Content="Browse&#x2026;" />
             <Button
+                AutomationProperties.AutomationId="RemoveActionButton"
                 Grid.Column="2"
                 VerticalAlignment="Bottom"
                 Click="Remove_Click"

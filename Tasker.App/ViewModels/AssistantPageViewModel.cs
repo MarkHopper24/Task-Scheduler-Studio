@@ -54,25 +54,63 @@ public partial class AssistantPageViewModel : ObservableObject
     [ObservableProperty]
     public partial string AuthStatusText { get; set; } = "Checking sign-in\u2026";
 
-    /// <summary>Probes GitHub sign-in: prefers the gh CLI's logged-in user, falling back to a saved
-    /// token, otherwise reports signed-out. Safe to call repeatedly (e.g. on navigation / after auth).</summary>
+    /// <summary>All github.com accounts gh currently knows about (rarely more than one, but
+    /// multi-account setups are common for anyone with separate work/personal GitHub logins).
+    /// Drives the "Switch account" flyout; empty when signed out or gh isn't installed.</summary>
+    public ObservableCollection<GhAccount> Accounts { get; } = new();
+
+    public bool HasMultipleAccounts => Accounts.Count > 1;
+
+    /// <summary>Probes GitHub sign-in and hardens against a few states the previous version
+    /// conflated: (1) gh reports an account locally but a live API call to verify it fails (expired
+    /// or revoked token, or no network) — now surfaced as <see cref="GhAuthState.Error"/> instead of
+    /// either silently claiming SignedIn or incorrectly implying the user must sign in from
+    /// scratch; (2) multiple gh accounts for github.com — now enumerated into <see cref="Accounts"/>
+    /// so the UI can offer a switcher instead of only ever reflecting whichever gh happens to have
+    /// marked active. Safe to call repeatedly (e.g. on navigation / after auth changes).</summary>
     public async Task RefreshAuthStatusAsync()
     {
         AuthState = GhAuthState.Checking;
         AuthStatusText = "Checking sign-in\u2026";
 
-        string? user = null;
+        IReadOnlyList<GhAccount> accounts = Array.Empty<GhAccount>();
+        bool ghInstalled;
         try
         {
-            if (await GitHubAuth.IsAvailableAsync())
-                user = await GitHubAuth.GetUserLoginAsync();
+            ghInstalled = await GitHubAuth.IsAvailableAsync();
+            if (ghInstalled) accounts = await GitHubAuth.ListAccountsAsync();
         }
-        catch { /* treated as signed-out below */ }
-
-        if (user is not null)
+        catch
         {
-            AuthState = GhAuthState.SignedIn;
-            AuthStatusText = $"Signed in as {user}";
+            ghInstalled = false;
+        }
+
+        Accounts.Clear();
+        foreach (var a in accounts) Accounts.Add(a);
+        OnPropertyChanged(nameof(HasMultipleAccounts));
+
+        var active = accounts.FirstOrDefault(a => a.IsActive);
+        if (active is not null)
+        {
+            // gh has an account marked active locally; verify it's actually still good against
+            // GitHub rather than trusting local state alone (a revoked/expired token would
+            // otherwise silently look "signed in" until the assistant tries to use it).
+            string? verifiedUser = null;
+            try { verifiedUser = await GitHubAuth.GetUserLoginAsync(); }
+            catch { /* treated as verification failure below */ }
+
+            if (string.Equals(verifiedUser, active.Login, StringComparison.OrdinalIgnoreCase))
+            {
+                AuthState = GhAuthState.SignedIn;
+                AuthStatusText = HasMultipleAccounts ? $"Signed in as {active.Login} ({Accounts.Count} accounts)" : $"Signed in as {active.Login}";
+            }
+            else
+            {
+                AuthState = GhAuthState.Error;
+                AuthStatusText = $"{active.Login}'s session couldn't be verified";
+                ConnectionStatus = $"gh reports {active.Login} as signed in, but a live check with GitHub failed. " +
+                    "This can happen with an expired or revoked token, or no network connection. Try Switch account, or sign in again.";
+            }
         }
         else if (_assistant.HasStoredToken)
         {
@@ -82,7 +120,7 @@ public partial class AssistantPageViewModel : ObservableObject
         else
         {
             AuthState = GhAuthState.SignedOut;
-            AuthStatusText = "Not signed in";
+            AuthStatusText = ghInstalled ? "Not signed in" : "gh CLI not found \u2014 paste a token below";
         }
     }
 
@@ -277,6 +315,64 @@ public partial class AssistantPageViewModel : ObservableObject
         ConnectionStatus = "Removed saved token. Using your signed-in GitHub Copilot account.";
         OnPropertyChanged(nameof(HasStoredToken));
         await RefreshAuthStatusAsync();
+    }
+
+    /// <summary>Full sign-out: logs gh out of whichever account is currently active (not just the
+    /// saved-token fallback, which is all the old "Remove" button ever touched) and clears any
+    /// saved token. This is the fix for "the logout button doesn't really sign me out": previously
+    /// there was no command that ever called gh auth logout at all, so anyone authenticated via gh
+    /// (the common path — Sign in with GitHub) could never actually sign out from this page.</summary>
+    [RelayCommand]
+    private async Task SignOutAsync()
+    {
+        ConnectionStatus = "Signing out\u2026";
+        try
+        {
+            var hadActiveGhAccount = Accounts.Any(a => a.IsActive);
+            var ghOk = !hadActiveGhAccount || await GitHubAuth.LogoutActiveAccountAsync();
+
+            _assistant.ClearToken();
+            await _assistant.ResetAsync();
+            OnPropertyChanged(nameof(HasStoredToken));
+            await RefreshAuthStatusAsync();
+
+            ConnectionStatus = ghOk
+                ? "Signed out."
+                : "Removed the saved token, but couldn't sign the gh CLI out of its active account. " +
+                  "Run \u201Cgh auth logout\u201D manually if it's still showing as signed in.";
+        }
+        catch (Exception ex)
+        {
+            ConnectionStatus = $"Sign-out failed: {ex.Message}";
+        }
+    }
+
+    /// <summary>Switches which github.com account gh (and this app) uses. Only meaningful with 2+
+    /// accounts signed in to gh — see <see cref="Accounts"/> / <see cref="HasMultipleAccounts"/>.</summary>
+    [RelayCommand]
+    private async Task SwitchAccountAsync(GhAccount? account)
+    {
+        if (account is null || account.IsActive) return;
+        ConnectionStatus = $"Switching to {account.Login}\u2026";
+        try
+        {
+            if (!await GitHubAuth.SwitchAccountAsync(account.Login))
+            {
+                ConnectionStatus = $"Couldn't switch to {account.Login}.";
+                return;
+            }
+            // A saved token is only meant to matter when gh itself isn't the auth source; once the
+            // user has explicitly picked a gh account, don't let a stale saved token shadow it.
+            _assistant.ClearToken();
+            await _assistant.ResetAsync();
+            OnPropertyChanged(nameof(HasStoredToken));
+            await RefreshAuthStatusAsync();
+            ConnectionStatus = $"Switched to {account.Login}.";
+        }
+        catch (Exception ex)
+        {
+            ConnectionStatus = $"Couldn't switch accounts: {ex.Message}";
+        }
     }
 
     partial void OnInputTextChanged(string value) => SendCommand.NotifyCanExecuteChanged();

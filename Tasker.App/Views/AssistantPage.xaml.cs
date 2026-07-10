@@ -2,6 +2,8 @@ using System.Collections.Specialized;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
+using Tasker_App.Controls;
+using Tasker_App.Services;
 using Tasker_App.ViewModels;
 using Windows.System;
 
@@ -72,5 +74,42 @@ public sealed partial class AssistantPage : Page
             ViewModel.InputText = suggestion.Prompt;
             InputBox.Focus(Microsoft.UI.Xaml.FocusState.Programmatic);
         }
+    }
+
+    /// <summary>Builds the account list on demand (rather than a data-bound MenuFlyout, which WinUI
+    /// doesn't template cleanly for a plain ObservableCollection) so it always reflects the latest
+    /// <see cref="AssistantPageViewModel.Accounts"/> at the moment the button is clicked.</summary>
+    private void SwitchAccountButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        var flyout = new MenuFlyout();
+        foreach (var account in ViewModel.Accounts)
+        {
+            var item = new MenuFlyoutItem
+            {
+                Text = account.IsActive ? $"{account.Login} (current)" : account.Login,
+                Icon = new FontIcon { Glyph = account.IsActive ? "\uE73E" : "\uE77B" },
+                IsEnabled = !account.IsActive,
+            };
+            item.Click += (_, _) =>
+            {
+                if (ViewModel.SwitchAccountCommand.CanExecute(account))
+                    ViewModel.SwitchAccountCommand.Execute(account);
+            };
+            flyout.Items.Add(item);
+        }
+        flyout.ShowAt((Microsoft.UI.Xaml.FrameworkElement)sender);
+    }
+
+    private async void McpSetupButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = "MCP setup",
+            Content = new McpSetupControl(),
+            CloseButtonText = "Done",
+        };
+        ThemeManager.ApplyToDialog(dialog);
+        await dialog.ShowAsync();
     }
 }

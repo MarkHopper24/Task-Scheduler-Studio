@@ -20,37 +20,53 @@
         </Grid.RowDefinitions>
 
         <!--  Header  -->
-        <StackPanel Grid.Row="0" Spacing="2">
-            <TextBlock Text="Create with Copilot" Style="{StaticResource TitleTextBlockStyle}" />
-            <TextBlock
-                Text="Describe a task in plain language. Copilot will ask for anything it needs, then create it in Windows Task Scheduler."
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                TextWrapping="Wrap" />
-            <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,8,0,0" VerticalAlignment="Bottom">
-                <ComboBox
-                    MinWidth="240"
-                    AutomationProperties.AutomationId="ModelCombo"
-                    DisplayMemberPath="Name"
-                    DropDownOpened="ModelCombo_DropDownOpened"
-                    Header="Model"
-                    ItemsSource="{x:Bind ViewModel.Models}"
-                    SelectedItem="{x:Bind ViewModel.SelectedModelOption, Mode=TwoWay}" />
-                <ComboBox
-                    MinWidth="150"
-                    AutomationProperties.AutomationId="EffortCombo"
-                    Header="Reasoning effort"
-                    IsEnabled="{x:Bind ViewModel.CanPickEffort, Mode=OneWay}"
-                    ItemsSource="{x:Bind ViewModel.ReasoningEfforts}"
-                    SelectedItem="{x:Bind ViewModel.SelectedReasoningEffort, Mode=TwoWay}" />
-                <ProgressRing
-                    Width="18"
-                    Height="18"
-                    Margin="0,0,0,6"
-                    VerticalAlignment="Bottom"
-                    IsActive="{x:Bind ViewModel.ModelsLoading, Mode=OneWay}"
-                    Visibility="{x:Bind helpers:Format.BoolToVisibility(ViewModel.ModelsLoading), Mode=OneWay}" />
+        <Grid Grid.Row="0" ColumnSpacing="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Spacing="2">
+                <TextBlock Text="Create with Copilot" Style="{StaticResource TitleTextBlockStyle}" />
+                <TextBlock
+                    Text="Describe a task in plain language. Copilot will ask for anything it needs, then create it in Windows Task Scheduler."
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    TextWrapping="Wrap" />
+                <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,8,0,0" VerticalAlignment="Bottom">
+                    <ComboBox
+                        MinWidth="240"
+                        AutomationProperties.AutomationId="ModelCombo"
+                        DisplayMemberPath="Name"
+                        DropDownOpened="ModelCombo_DropDownOpened"
+                        Header="Model"
+                        ItemsSource="{x:Bind ViewModel.Models}"
+                        SelectedItem="{x:Bind ViewModel.SelectedModelOption, Mode=TwoWay}" />
+                    <ComboBox
+                        MinWidth="150"
+                        AutomationProperties.AutomationId="EffortCombo"
+                        Header="Reasoning effort"
+                        IsEnabled="{x:Bind ViewModel.CanPickEffort, Mode=OneWay}"
+                        ItemsSource="{x:Bind ViewModel.ReasoningEfforts}"
+                        SelectedItem="{x:Bind ViewModel.SelectedReasoningEffort, Mode=TwoWay}" />
+                    <ProgressRing
+                        Width="18"
+                        Height="18"
+                        Margin="0,0,0,6"
+                        VerticalAlignment="Bottom"
+                        IsActive="{x:Bind ViewModel.ModelsLoading, Mode=OneWay}"
+                        Visibility="{x:Bind helpers:Format.BoolToVisibility(ViewModel.ModelsLoading), Mode=OneWay}" />
+                </StackPanel>
             </StackPanel>
-        </StackPanel>
+            <Button
+                AutomationProperties.AutomationId="McpSetupButton"
+                Grid.Column="1"
+                VerticalAlignment="Top"
+                Click="McpSetupButton_Click">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon FontSize="14" Glyph="&#xE943;" />
+                    <TextBlock Text="MCP setup" />
+                </StackPanel>
+            </Button>
+        </Grid>
 
         <!--  Authentication  -->
         <Expander
@@ -95,12 +111,36 @@
                 <Button
                     AutomationProperties.AutomationId="SignInGitHubButton"
                     Command="{x:Bind ViewModel.SignInWithGitHubCommand}"
-                    Style="{ThemeResource AccentButtonStyle}">
+                    Style="{ThemeResource AccentButtonStyle}"
+                    Visibility="{x:Bind helpers:Format.VisibleWhenSignedOut(ViewModel.AuthState), Mode=OneWay}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="14" Glyph="&#xE77B;" />
                         <TextBlock Text="Sign in with GitHub" />
                     </StackPanel>
                 </Button>
+                <StackPanel
+                    Orientation="Horizontal"
+                    Spacing="8"
+                    Visibility="{x:Bind helpers:Format.VisibleWhenSignedIn(ViewModel.AuthState), Mode=OneWay}">
+                    <Button
+                        x:Name="SwitchAccountButton"
+                        AutomationProperties.AutomationId="SwitchAccountButton"
+                        Click="SwitchAccountButton_Click"
+                        Visibility="{x:Bind helpers:Format.BoolToVisibility(ViewModel.HasMultipleAccounts), Mode=OneWay}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon FontSize="14" Glyph="&#xE748;" />
+                            <TextBlock Text="Switch account" />
+                        </StackPanel>
+                    </Button>
+                    <Button
+                        AutomationProperties.AutomationId="SignOutButton"
+                        Command="{x:Bind ViewModel.SignOutCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon FontSize="14" Glyph="&#xE77B;" />
+                            <TextBlock Text="Sign out" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
                 <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}">
                     Uses the GitHub CLI (gh) to sign in interactively; it reuses your existing
                     gh session if you have one, otherwise opens the GitHub web sign-in. A Copilot

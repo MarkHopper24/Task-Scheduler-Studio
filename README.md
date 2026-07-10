@@ -154,10 +154,14 @@ VS Code** — each merges a `wintask-scheduler` entry into the right config file
 already there) pointing at the bundled server. Restart the CLI/editor afterward.
 
 To do it manually, set the MCP client's launch command. **When the app is installed** (from the
-Microsoft Store or an MSIX package) it registers a stable app-execution alias, so the command is
-simply `WinTaskSchedulerMcp.exe` — Windows resolves it from `%LOCALAPPDATA%\Microsoft\WindowsApps`
-(on `PATH`) to the installed server, and it keeps working across app updates regardless of install
-location. For an **unpackaged dev run**, use the absolute path to the built `Tasker.Mcp.exe`.
+Microsoft Store or an MSIX package) the real install folder lives under the protected
+`C:\Program Files\WindowsApps\...`, which other processes generally can't reach reliably. The app
+works around this by copying its bundled server, on every launch, to a normal per-user folder at
+`%LOCALAPPDATA%\WindowsTasker\mcp\Tasker.Mcp.exe` and pointing MCP clients there instead; that's the
+exact command the one-click installers write and the one shown on the About page. A stable
+app-execution alias, `WinTaskSchedulerMcp.exe` (resolved from `%LOCALAPPDATA%\Microsoft\WindowsApps`
+on `PATH`), is also registered as a fallback if staging can't run for some reason. For an
+**unpackaged dev run**, use the absolute path to the built `Tasker.Mcp.exe`.
 
 **GitHub Copilot CLI** — `~/.copilot/mcp-config.json`:
 
@@ -166,7 +170,7 @@ location. For an **unpackaged dev run**, use the absolute path to the built `Tas
   "mcpServers": {
     "wintask-scheduler": {
       "type": "stdio",
-      "command": "WinTaskSchedulerMcp.exe",
+      "command": "%LOCALAPPDATA%\\WindowsTasker\\mcp\\Tasker.Mcp.exe",
       "args": [],
       "tools": []
     }
@@ -174,8 +178,9 @@ location. For an **unpackaged dev run**, use the absolute path to the built `Tas
 }
 ```
 
-The one-click installers write this alias automatically. For an unpackaged dev build, replace the
-command with the absolute path to the built server, e.g.
+The one-click installers write this staged path automatically (expanded to the real folder, not
+the literal `%LOCALAPPDATA%` text). For an unpackaged dev build, replace the command with the
+absolute path to the built server, e.g.
 `Tasker.App\bin\x64\Debug\net10.0-windows10.0.26100.0\win-x64\mcp\Tasker.Mcp.exe`.
 
 **VS Code** (Agent mode) — `%APPDATA%\Code\User\mcp.json` (or per-workspace `.vscode/mcp.json`):
@@ -185,8 +190,23 @@ command with the absolute path to the built server, e.g.
   "servers": {
     "wintask-scheduler": {
       "type": "stdio",
-      "command": "WinTaskSchedulerMcp.exe",
+      "command": "%LOCALAPPDATA%\\WindowsTasker\\mcp\\Tasker.Mcp.exe",
       "args": []
+    }
+  }
+}
+```
+
+**Claude Code** — `~/.claude.json` (user-scoped, applies across projects):
+
+```json
+{
+  "mcpServers": {
+    "wintask-scheduler": {
+      "type": "stdio",
+      "command": "%LOCALAPPDATA%\\WindowsTasker\\mcp\\Tasker.Mcp.exe",
+      "args": [],
+      "env": {}
     }
   }
 }

@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Tasker.Core;
 using Tasker_App.Services;
@@ -81,5 +82,63 @@ public sealed partial class TaskEditorDialogPage : Page
     {
         if (sender is Controls.ActionEditorControl { ViewModel: { } action })
             ViewModel.Actions.Remove(action);
+    }
+
+    private void BrowseLocalAccounts_Click(object sender, RoutedEventArgs e)
+    {
+        LocalAccountsError.IsOpen = false;
+
+        IReadOnlyList<LocalAccount> accounts;
+        try
+        {
+            accounts = LocalAccountService.GetSelectableAccounts(Helpers.Elevation.IsElevated);
+        }
+        catch (System.ComponentModel.Win32Exception ex)
+        {
+            LocalAccountsError.Message = ex.Message;
+            LocalAccountsError.IsOpen = true;
+            return;
+        }
+
+        if (accounts.Count == 0)
+        {
+            LocalAccountsError.Message = "No enabled local user accounts are available.";
+            LocalAccountsError.IsOpen = true;
+            return;
+        }
+
+        var flyout = new MenuFlyout();
+        foreach (var account in accounts.Where(account => !account.IsServiceAccount))
+        {
+            var item = new MenuFlyoutItem { Text = account.QualifiedName, Tag = account };
+            AutomationProperties.SetAutomationId(item, $"SelectLocalAccount_{account.Name}");
+            item.Click += LocalAccount_Click;
+            flyout.Items.Add(item);
+        }
+
+        var serviceAccounts = accounts.Where(account => account.IsServiceAccount).ToList();
+        if (serviceAccounts.Count > 0)
+        {
+            flyout.Items.Add(new MenuFlyoutSeparator());
+            foreach (var account in serviceAccounts)
+            {
+                var item = new MenuFlyoutItem { Text = account.QualifiedName, Tag = account };
+                AutomationProperties.SetAutomationId(item, $"SelectServiceAccount_{account.Name.Replace(" ", string.Empty)}");
+                item.Click += LocalAccount_Click;
+                flyout.Items.Add(item);
+            }
+        }
+
+        flyout.ShowAt((FrameworkElement)sender);
+    }
+
+    private void LocalAccount_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not MenuFlyoutItem { Tag: LocalAccount account })
+            return;
+
+        ViewModel.RunAsUser = account.QualifiedName;
+        if (account.IsServiceAccount)
+            ViewModel.SelectedLogon = ViewModel.LogonOptions.Single(option => option.Value == "ServiceAccount");
     }
 }

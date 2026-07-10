@@ -82,6 +82,11 @@ public sealed class CopilotAssistant : IAsyncDisposable
 
     private static bool IsPackaged => TryPackagePath() is not null;
 
+    /// <summary>Whether this process has package identity (installed/MSIX run vs. an unpackaged dev
+    /// build). Exposed for diagnostics only, e.g. tailoring error messages so Store users never see
+    /// dev-oriented advice like "build the solution".</summary>
+    public static bool IsPackagedForDiagnostics => IsPackaged;
+
     /// <summary>The command external MCP clients (and the in-app MCP routing) should launch to start
     /// the bundled server. For an installed/packaged app this is a per-user staged copy (see
     /// <see cref="EnsureStagedMcpServer"/>), so external tools never have to reach into the
@@ -102,49 +107,118 @@ public sealed class CopilotAssistant : IAsyncDisposable
     /// processes/users can't reliably reach it directly, even though the app-execution alias
     /// usually resolves it fine. Staging a plain copy here removes that dependency entirely, so
     /// external MCP clients (Copilot CLI, VS Code, Claude Code) always get a normal, unrestricted
-    /// path regardless of install method, elevation, or alias registration quirks.</summary>
+    /// path regardless of install method, elevation, or alias registration quirks.
+    ///
+    /// TRUE ROOT CAUSE of the "staged path doesn't exist" bug: for a full-trust MSIX-packaged app,
+    /// Windows transparently redirects classic Win32 file I/O against
+    /// <c>Environment.SpecialFolder.LocalApplicationData</c> (what <c>%LOCALAPPDATA%</c> naively
+    /// looks like, e.g. <c>C:\Users\me\AppData\Local</c>) to a package-private compatibility folder
+    /// under <c>...\AppData\Local\Packages\&lt;PackageFamilyName&gt;\LocalCache\Local\...</c>. The
+    /// app was always staging successfully — just into that redirected location — so the plain
+    /// <c>%LOCALAPPDATA%\WindowsTasker\mcp</c> path written into external MCP client configs never
+    /// actually existed there; only a non-packaged process (or the app itself, since it's
+    /// consistently redirected) would ever see it. External tools got a confidently-reported but
+    /// nonexistent path. <see cref="Windows.Storage.ApplicationData.LocalCacheFolder"/> reports the
+    /// real, unredirected path Windows actually uses, so using it here keeps the app and any
+    /// external tool looking at the exact same real file.</summary>
     private static string StagedMcpDir => System.IO.Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WindowsTasker", "mcp");
+        IsPackaged
+            ? Windows.Storage.ApplicationData.Current.LocalCacheFolder.Path
+            : Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "WindowsTasker", "mcp");
 
     private static string StagedMcpExePath => System.IO.Path.Combine(StagedMcpDir, "Tasker.Mcp.exe");
+
+    /// <summary>Serializes staging attempts. <see cref="WarmMcpServerStaging"/> kicks off a
+    /// background copy at startup; without this lock, a near-simultaneous synchronous call to <see
+    /// cref="McpServerCommand"/> (e.g. opening Settings or clicking an Install button right after
+    /// launch) could race it and hit a file-sharing violation mid-copy, which the old code treated
+    /// as fatal and fell back to the app-execution alias instead of the robust staged path.</summary>
+    private static readonly object StagingLock = new();
+
+    /// <summary>Reason the last staging attempt fell back to the alias, or null if the most recent
+    /// attempt produced (or already had) a working staged copy. Lets the UI tell users on machines
+    /// where staging silently never worked (see <see cref="McpServerCommand"/>) what actually went
+    /// wrong, instead of just handing them a less-robust alias with no explanation.</summary>
+    public static string? LastStagingError { get; private set; }
 
     /// <summary>Copies the bundled MCP server from the package's install folder into <see
     /// cref="StagedMcpDir"/> the first time it's needed, and again whenever the bundled copy is
     /// newer or a different size (e.g. after an app update). Cheap to call repeatedly: skips the
-    /// copy entirely once the staged copy is already current. Falls back to the app-execution alias
-    /// if staging fails for any reason (e.g. disk full), so the server is still reachable.</summary>
+    /// copy entirely once the staged copy is already current.
+    ///
+    /// Confirmed root cause of one real failure mode: <see cref="WarmMcpServerStaging"/>'s
+    /// background copy at startup and a near-simultaneous synchronous call from the UI (e.g.
+    /// clicking an Install button right after launch) used to be able to race each other mid-copy
+    /// of the same destination files, throwing a file-sharing violation; that was treated as fatal
+    /// and silently fell back to the app-execution alias instead of the robust staged path, even
+    /// when a perfectly good staged copy already existed. <see cref="StagingLock"/> serializes
+    /// callers so that can't happen, and as defense in depth, any refresh failure here still
+    /// prefers an existing staged copy over the alias.
+    ///
+    /// Also guards against a silent-failure mode seen on at least one machine where nothing was
+    /// ever staged at all (first run, no prior copy to fall back to): enumerating the source
+    /// folder can come back empty on some machines/policies without throwing, which used to make
+    /// this method report success (returning a path to a .exe that was never actually written).
+    /// The explicit existence check after copying turns that into a proper failure so it falls back
+    /// to the alias instead of handing out a broken path. <see cref="LastStagingError"/> captures
+    /// the reason so it can be surfaced in the UI instead of failing silently.</summary>
     private static string EnsureStagedMcpServer()
     {
-        try
+        lock (StagingLock)
         {
-            var sourceExe = McpExePath;
-            if (!System.IO.File.Exists(sourceExe)) return McpAlias; // nothing bundled to stage
-
-            var sourceDir = System.IO.Path.GetDirectoryName(sourceExe)!;
             var stagedExe = StagedMcpExePath;
-
-            var upToDate = System.IO.File.Exists(stagedExe)
-                && System.IO.File.GetLastWriteTimeUtc(sourceExe) == System.IO.File.GetLastWriteTimeUtc(stagedExe)
-                && new System.IO.FileInfo(sourceExe).Length == new System.IO.FileInfo(stagedExe).Length;
-
-            if (!upToDate)
+            try
             {
-                System.IO.Directory.CreateDirectory(StagedMcpDir);
-                foreach (var file in System.IO.Directory.EnumerateFiles(sourceDir, "*", System.IO.SearchOption.AllDirectories))
+                var sourceExe = McpExePath;
+                if (!System.IO.File.Exists(sourceExe))
                 {
-                    var rel = System.IO.Path.GetRelativePath(sourceDir, file);
-                    var dest = System.IO.Path.Combine(StagedMcpDir, rel);
-                    System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(dest)!);
-                    System.IO.File.Copy(file, dest, overwrite: true);
-                    System.IO.File.SetLastWriteTimeUtc(dest, System.IO.File.GetLastWriteTimeUtc(file));
+                    if (System.IO.File.Exists(stagedExe)) return stagedExe;
+                    LastStagingError = $"Bundled server not found at '{sourceExe}'.";
+                    return McpAlias;
                 }
+
+                var sourceDir = System.IO.Path.GetDirectoryName(sourceExe)!;
+
+                var upToDate = System.IO.File.Exists(stagedExe)
+                    && System.IO.File.GetLastWriteTimeUtc(sourceExe) == System.IO.File.GetLastWriteTimeUtc(stagedExe)
+                    && new System.IO.FileInfo(sourceExe).Length == new System.IO.FileInfo(stagedExe).Length;
+
+                if (!upToDate)
+                {
+                    System.IO.Directory.CreateDirectory(StagedMcpDir);
+                    var copied = 0;
+                    foreach (var file in System.IO.Directory.EnumerateFiles(sourceDir, "*", System.IO.SearchOption.AllDirectories))
+                    {
+                        var rel = System.IO.Path.GetRelativePath(sourceDir, file);
+                        var dest = System.IO.Path.Combine(StagedMcpDir, rel);
+                        System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(dest)!);
+                        System.IO.File.Copy(file, dest, overwrite: true);
+                        System.IO.File.SetLastWriteTimeUtc(dest, System.IO.File.GetLastWriteTimeUtc(file));
+                        copied++;
+                    }
+
+                    // Enumerating the source can silently yield zero files on some machines/policies
+                    // (no exception, just nothing to iterate) — don't report success in that case.
+                    if (copied == 0 && !System.IO.File.Exists(stagedExe))
+                        throw new System.IO.IOException($"Enumerating '{sourceDir}' produced no files to stage (possibly blocked directory listing).");
+                }
+
+                if (!System.IO.File.Exists(stagedExe))
+                    throw new System.IO.IOException($"Staging finished without producing '{stagedExe}'.");
+
+                LastStagingError = null;
+                return stagedExe;
             }
-            return stagedExe;
-        }
-        catch
-        {
-            // Staging is best-effort hardening; the alias still works for normal installs.
-            return McpAlias;
+            catch (Exception ex)
+            {
+                // A refresh attempt failed (e.g. transient access issue reading from WindowsApps, or
+                // a lock held by an in-flight MCP server process). Prefer a previously-staged copy —
+                // it's still a normal, directly-reachable file — over the alias, which depends on
+                // PATH/alias-registration quirks the staged copy exists to avoid.
+                LastStagingError = ex.Message;
+                return System.IO.File.Exists(stagedExe) ? stagedExe : McpAlias;
+            }
         }
     }
 
