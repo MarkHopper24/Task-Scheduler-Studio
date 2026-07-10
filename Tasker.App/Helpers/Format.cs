@@ -112,6 +112,7 @@ public static class Format
     {
         GhAuthState.SignedIn => "\uE73E",   // CheckMark
         GhAuthState.SignedOut => "\uE7BA",  // Warning
+        GhAuthState.Error => "\uE783",      // ErrorBadge
         _ => "\uE9F5",                       // Sync (checking)
     };
 
@@ -121,8 +122,18 @@ public static class Format
         {
             GhAuthState.SignedIn => Color.FromArgb(255, 0x4C, 0xC2, 0x5E),  // green
             GhAuthState.SignedOut => Color.FromArgb(255, 0xE8, 0x9A, 0x3C), // amber
+            GhAuthState.Error => Color.FromArgb(255, 0xE0, 0x4F, 0x4F),     // red
             _ => Color.FromArgb(255, 0x9A, 0x9A, 0x9A),                      // gray
         };
         return new SolidColorBrush(color);
     }
+
+    /// <summary>Sign-in button is only useful while signed out (or still checking); once signed in
+    /// (or a verification error, which still means an account is locally recorded) the Sign out /
+    /// Switch account controls take its place.</summary>
+    public static Visibility VisibleWhenSignedOut(GhAuthState state) =>
+        state is GhAuthState.SignedOut or GhAuthState.Checking ? Visibility.Visible : Visibility.Collapsed;
+
+    public static Visibility VisibleWhenSignedIn(GhAuthState state) =>
+        state is GhAuthState.SignedIn or GhAuthState.Error ? Visibility.Visible : Visibility.Collapsed;
 }

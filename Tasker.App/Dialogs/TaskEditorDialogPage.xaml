@@ -35,7 +35,7 @@
         <Grid Grid.Row="2">
 
             <!--  General  -->
-            <ScrollViewer x:Name="GeneralPanel">
+            <ScrollViewer x:Name="GeneralPanel" Padding="0,0,16,0">
                 <StackPanel Spacing="12">
                     <TextBox
                         AutomationProperties.AutomationId="EditorName"
@@ -75,10 +75,26 @@
                         IsOn="{x:Bind ViewModel.Hidden, Mode=TwoWay}" />
 
                     <TextBlock Margin="0,4,0,0" Text="Security options" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                    <TextBox
-                        AutomationProperties.AutomationId="EditorRunAsUser"
-                        Header="Run as user"
-                        Text="{x:Bind ViewModel.RunAsUser, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <Grid ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox
+                            AutomationProperties.AutomationId="EditorRunAsUser"
+                            Header="Run as user"
+                            Text="{x:Bind ViewModel.RunAsUser, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <Button
+                            AutomationProperties.AutomationId="BrowseLocalAccountsButton"
+                            Grid.Column="1"
+                            VerticalAlignment="Bottom"
+                            Click="BrowseLocalAccounts_Click"
+                            Content="Browse accounts" />
+                    </Grid>
+                    <InfoBar
+                        x:Name="LocalAccountsError"
+                        IsClosable="False"
+                        Severity="Error" />
                     <ComboBox
                         AutomationProperties.AutomationId="EditorLogon"
                         Header="When to run"
@@ -91,11 +107,17 @@
                         AutomationProperties.AutomationId="EditorPassword"
                         Header="Account password"
                         Visibility="{x:Bind helpers:Format.BoolToVisibility(ViewModel.ShowRunAsPassword), Mode=OneWay}" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Text="Choose the password-based option above, then enter the account password. It is used only to register the task and is not saved by Task Scheduler Studio."
+                        TextWrapping="Wrap"
+                        Visibility="{x:Bind helpers:Format.BoolToVisibility(ViewModel.ShowRunAsPassword), Mode=OneWay}" />
                 </StackPanel>
             </ScrollViewer>
 
             <!--  Triggers  -->
-            <ScrollViewer x:Name="TriggersPanel" Visibility="Collapsed">
+            <ScrollViewer x:Name="TriggersPanel" Padding="0,0,16,0" Visibility="Collapsed">
                 <StackPanel Spacing="12">
                     <Button AutomationProperties.AutomationId="AddTriggerButton" Command="{x:Bind ViewModel.AddTriggerCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="8">
@@ -125,7 +147,7 @@
             </ScrollViewer>
 
             <!--  Actions  -->
-            <ScrollViewer x:Name="ActionsPanel" Visibility="Collapsed">
+            <ScrollViewer x:Name="ActionsPanel" Padding="0,0,16,0" Visibility="Collapsed">
                 <StackPanel Spacing="12">
                     <Button AutomationProperties.AutomationId="AddActionButton" Command="{x:Bind ViewModel.AddActionCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="8">
@@ -155,7 +177,11 @@
             </ScrollViewer>
 
             <!--  Conditions  -->
-            <ScrollViewer x:Name="ConditionsPanel" Visibility="Collapsed">
+            <ScrollViewer
+                x:Name="ConditionsPanel"
+                AutomationProperties.AutomationId="ConditionsScrollViewer"
+                Padding="0,0,16,0"
+                Visibility="Collapsed">
                 <StackPanel Spacing="10">
                     <ToggleSwitch Header="Allow task to be run on demand" IsOn="{x:Bind ViewModel.AllowDemandStart, Mode=TwoWay}" />
                     <ToggleSwitch Header="Run as soon as possible after a missed start" IsOn="{x:Bind ViewModel.StartWhenAvailable, Mode=TwoWay}" />
@@ -186,7 +212,7 @@
             </ScrollViewer>
 
             <!--  Advanced (raw XML)  -->
-            <ScrollViewer x:Name="AdvancedPanel" Visibility="Collapsed">
+            <ScrollViewer x:Name="AdvancedPanel" Padding="0,0,16,0" Visibility="Collapsed">
                 <StackPanel Spacing="12">
                     <ToggleSwitch
                         AutomationProperties.AutomationId="EditorUseRawXml"

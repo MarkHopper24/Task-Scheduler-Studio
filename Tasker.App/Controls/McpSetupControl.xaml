@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<UserControl
+    x:Class="Tasker_App.Controls.McpSetupControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:controls="using:Tasker_App.Controls"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:Tasker_App.ViewModels"
+    mc:Ignorable="d">
+
+    <ScrollViewer MaxHeight="620" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel MaxWidth="680" Spacing="12">
+            <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}">
+                Install the bundled local MCP server for an AI client, or use the manual configuration
+                details below. It can list, inspect, create, run, and manage scheduled tasks through
+                Task Scheduler Studio.
+            </TextBlock>
+            <controls:WrapPanel HorizontalSpacing="8" VerticalSpacing="8">
+                <Button AutomationProperties.AutomationId="InstallMcpCopilotButton" Command="{x:Bind ViewModel.InstallCopilotCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon FontSize="14" Glyph="&#xE756;" />
+                        <TextBlock Text="Install for Copilot CLI" />
+                    </StackPanel>
+                </Button>
+                <Button AutomationProperties.AutomationId="InstallMcpVSCodeButton" Command="{x:Bind ViewModel.InstallVSCodeCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon FontSize="14" Glyph="&#xE756;" />
+                        <TextBlock Text="Install for VS Code" />
+                    </StackPanel>
+                </Button>
+                <Button AutomationProperties.AutomationId="InstallMcpClaudeButton" Command="{x:Bind ViewModel.InstallClaudeCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon FontSize="14" Glyph="&#xE756;" />
+                        <TextBlock Text="Install for Claude Code" />
+                    </StackPanel>
+                </Button>
+            </controls:WrapPanel>
+            <InfoBar
+                AutomationProperties.AutomationId="McpInstallInfoBar"
+                IsClosable="False"
+                IsOpen="{x:Bind ViewModel.InstallOpen, Mode=OneWay}"
+                Message="{x:Bind ViewModel.InstallStatus, Mode=OneWay}"
+                Severity="{x:Bind ViewModel.InstallSeverity, Mode=OneWay}" />
+            <TextBlock
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Text="The install buttons merge a wintask-scheduler stdio server into the selected tool's existing config. Restart that tool afterward." 
+                TextWrapping="Wrap" />
+            <Expander
+                AutomationProperties.AutomationId="McpManualSetupExpander"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Stretch">
+                <Expander.Header>
+                    <TextBlock Text="Manual setup and troubleshooting" />
+                </Expander.Header>
+                <StackPanel Spacing="14">
+                    <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}">
+                        To configure a client by hand, add the snippet below to its listed file, creating
+                        the file if needed, then fully restart the client.
+                    </TextBlock>
+                    <TextBox
+                        AutomationProperties.AutomationId="McpPathBox"
+                        FontFamily="Consolas"
+                        Header="Launch command"
+                        IsReadOnly="True"
+                        IsSpellCheckEnabled="False"
+                        Text="{x:Bind ViewModel.McpServerCommand}" />
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="GitHub Copilot CLI" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <TextBlock
+                            FontFamily="Consolas"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="{x:Bind ViewModel.CopilotCliConfigPath}"
+                            TextWrapping="Wrap" />
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="You can also run copilot, then /mcp add. Restart the CLI after changes."
+                            TextWrapping="Wrap" />
+                        <TextBox
+                            AutomationProperties.AutomationId="CopilotCliSnippetBox"
+                            AutomationProperties.Name="Copilot CLI MCP config snippet"
+                            AcceptsReturn="True"
+                            FontFamily="Consolas"
+                            IsReadOnly="True"
+                            IsSpellCheckEnabled="False"
+                            Text="{x:Bind ViewModel.CopilotCliSnippet}"
+                            TextWrapping="NoWrap" />
+                    </StackPanel>
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="VS Code (Copilot Chat, Agent mode)" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <TextBlock
+                            FontFamily="Consolas"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="{x:Bind ViewModel.VSCodeConfigPath}"
+                            TextWrapping="Wrap" />
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="For one project, use a workspace .vscode\mcp.json instead. Reload VS Code, then choose Agent mode in Copilot Chat."
+                            TextWrapping="Wrap" />
+                        <TextBox
+                            AutomationProperties.AutomationId="VSCodeSnippetBox"
+                            AutomationProperties.Name="VS Code MCP config snippet"
+                            AcceptsReturn="True"
+                            FontFamily="Consolas"
+                            IsReadOnly="True"
+                            IsSpellCheckEnabled="False"
+                            Text="{x:Bind ViewModel.VSCodeSnippet}"
+                            TextWrapping="NoWrap" />
+                    </StackPanel>
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Claude Code" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <TextBlock
+                            FontFamily="Consolas"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="{x:Bind ViewModel.ClaudeCodeConfigPath}"
+                            TextWrapping="Wrap" />
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="This user-level setting applies to all projects. Restart Claude Code after changes."
+                            TextWrapping="Wrap" />
+                        <TextBox
+                            AutomationProperties.AutomationId="ClaudeSnippetBox"
+                            AutomationProperties.Name="Claude Code MCP config snippet"
+                            AcceptsReturn="True"
+                            FontFamily="Consolas"
+                            IsReadOnly="True"
+                            IsSpellCheckEnabled="False"
+                            Text="{x:Bind ViewModel.ClaudeSnippet}"
+                            TextWrapping="NoWrap" />
+                    </StackPanel>
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        TextWrapping="Wrap">
+                        Troubleshooting: the installed app stages the server under LocalAppData so AI clients
+                        do not need access to the protected WindowsApps folder. If a client reports command
+                        not found, open Task Scheduler Studio once, then fully restart that client so it
+                        reads the refreshed server and configuration.
+                    </TextBlock>
+                </StackPanel>
+            </Expander>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

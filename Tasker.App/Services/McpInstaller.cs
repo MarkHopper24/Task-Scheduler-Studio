@@ -14,11 +14,17 @@ public static class McpInstaller
     public const string ServerName = "wintask-scheduler";
 
     public static string McpExePath => CopilotAssistant.McpExePath;
-    public static bool McpAvailable => File.Exists(McpExePath);
+    public static bool McpAvailable => CopilotAssistant.McpAvailable;
 
     /// <summary>The command written into external MCP client configs: a stable app-execution alias
     /// when installed, or the absolute server path for unpackaged dev runs.</summary>
     public static string McpServerCommand => CopilotAssistant.McpServerCommand;
+
+    /// <summary>Reason the last <see cref="McpServerCommand"/> resolution fell back to the
+    /// app-execution alias instead of the (normally more reliable) staged copy, or null if the
+    /// staged copy was used. Surfaced next to the Install buttons so a degraded install is visible
+    /// and reportable instead of silent.</summary>
+    public static string? LastStagingError => CopilotAssistant.LastStagingError;
 
     public static string CopilotCliConfigPath =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".copilot", "mcp-config.json");
@@ -81,7 +87,12 @@ public static class McpInstaller
         try
         {
             if (!McpAvailable)
-                return OperationResult.Fail($"The bundled MCP server wasn't found at '{McpExePath}'. Build the solution first.");
+            {
+                var hint = CopilotAssistant.IsPackagedForDiagnostics
+                    ? "Try reinstalling Task Scheduler Studio from the Microsoft Store."
+                    : "Build the solution first.";
+                return OperationResult.Fail($"The bundled MCP server wasn't found at '{McpExePath}'. {hint}");
+            }
 
             JsonObject root;
             if (File.Exists(configPath))
@@ -117,7 +128,10 @@ public static class McpInstaller
 
             File.WriteAllText(configPath, root.ToJsonString(WriteOptions));
             var verb = existed ? "Updated" : "Installed";
-            return OperationResult.Ok($"{verb} '{ServerName}' for {target}. Restart {target} to pick it up. ({configPath})", configPath);
+            var note = LastStagingError is { } err
+                ? $" Note: used the fallback alias command because staging the server locally failed ({err})."
+                : "";
+            return OperationResult.Ok($"{verb} '{ServerName}' for {target}. Restart {target} to pick it up. ({configPath}){note}", configPath);
         }
         catch (Exception ex)
         {

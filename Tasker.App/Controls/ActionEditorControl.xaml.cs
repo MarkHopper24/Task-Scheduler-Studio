@@ -1,7 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.Windows.Storage.Pickers;
 using Tasker_App.ViewModels;
-using Windows.Storage.Pickers;
 
 namespace Tasker_App.Controls;
 
@@ -52,8 +52,11 @@ public sealed partial class ActionEditorControl : UserControl
     {
         if (ViewModel is null) return;
 
-        var picker = new FileOpenPicker { SuggestedStartLocation = PickerLocationId.ComputerFolder };
-        WinRT.Interop.InitializeWithWindow.Initialize(picker, App.WindowHandle);
+        var source = (FrameworkElement)sender;
+        var picker = new FileOpenPicker(source.XamlRoot.ContentIslandEnvironment.AppWindowId)
+        {
+            SuggestedStartLocation = PickerLocationId.ComputerFolder,
+        };
         picker.FileTypeFilter.Add("*");
 
         var file = await picker.PickSingleFileAsync();
