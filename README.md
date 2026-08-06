@@ -51,7 +51,7 @@ For now, WinTask Scheduler requires an internet connection on installation for l
 Method 4: Building the solution on your own in Visual Studio using the provided source code (this method does not require a network connection).
 
 
-## Why it's cross‑compatible
+## Cross-compatible with Task Scheduler
 
 Task Scheduler Studio talks to the **Task Scheduler V2 COM API** (`Schedule.Service`) through the mature
 `Microsoft.Win32.TaskScheduler` managed wrapper. That is the *same* API and the *same* task store
